@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Lao Ou Writing Workbench",
+    "description": "A six-stage WeChat article writing prompt pipeline: topic angles, structure, polish, spread optimization, title & cover, self-check. Fill the fields and send the assembled prompt into the current session; the same prompts are also registered as 7 agent skills.",
+    "detail": "docs/DETAIL.md"
+  }
+}
