@@ -111,22 +111,37 @@
 
 ## 安装
 
-三种装法，任选一种。
+四种装法，任选一种。
 
-### ① 从 GitHub（换台机器最省事）
+### ① 插件市场安装（其他 DSH 用户推荐）
+
+本仓库自带一份市场索引 `index.json`（[格式 1](https://github.com/andy2058/dsh-writing-workbench/blob/main/index.json)），任何人把它加进自己的 DSH 就能一键安装、一键升级：
+
+1. 打开 **设置 → 插件 → 「发现」**；
+2. 点「**添加索引源**」，索引 URL 填：
+
+```
+https://raw.githubusercontent.com/andy2058/dsh-writing-workbench/main/index.json
+```
+
+3. 在「发现」里找到「**老欧写作工作台**」，点「安装」。
+
+之后索引进新版本时，「发现」页会显示可升级，点一下即可更新。索引里的版本是**按 commit 固定**的（`source.type: git` + 40 位 SHA），所以同一个版本号任何时候装到的都是同一份代码。
+
+### ② 从 GitHub 直接装（不想加索引）
 
 ```
 plugin_manager install_bundle target=git+https://github.com/andy2058/dsh-writing-workbench.git
 ```
 
-### ② 用打好的安装包（离线/内网）
+### ③ 用打好的安装包（离线/内网）
 
 ```bash
 # 从仓库下载 dist/lao-ou-dsh-writing-workbench-0.11.2.tgz，然后
 plugin_manager install_bundle target=/absolute/path/to/lao-ou-dsh-writing-workbench-0.11.2.tgz
 ```
 
-### ③ 本地开发目录（改代码后只需刷新页面）
+### ④ 本地开发目录（改代码后只需刷新页面）
 
 ```
 plugin_manager install_bundle target=/absolute/path/to/lao-ou-writing-workbench

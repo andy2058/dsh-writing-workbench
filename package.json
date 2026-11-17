@@ -22,7 +22,8 @@
     "icon.svg",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "index.json"
   ],
   "scripts": {
     "build": "node tools/build.js",

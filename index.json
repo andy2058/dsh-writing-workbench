@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "title": {
+    "zh": "老欧写作工作台插件索引",
+    "en": "Lao Ou Writing Workbench — plugin index"
+  },
+  "description": {
+    "zh": "老欧拾光记的六阶段写作流水线：选题、结构、润色、传播优化、自检、标题封面，装进 DeepSeek Harness 的左侧栏。",
+    "en": "The six-stage Lao Ou writing pipeline for DeepSeek Harness: topic, structure, polish, spread, self-check, titles. Lives in the left sidebar."
+  },
+  "metadata": {
+    "categories": {
+      "writing": {
+        "title": {
+          "zh": "写作",
+          "en": "Writing"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "@lao-ou/dsh-writing-workbench",
+      "title": {
+        "zh": "老欧写作工作台",
+        "en": "Lao Ou Writing Workbench"
+      },
+      "description": {
+        "zh": "左侧栏里的可视化写作工作台：六阶段提示词流水线、一键跑完后续、稿纸预览、附件上传，成稿自动存进 DSH-Writing desk 工作区下按会话划分的文件夹。",
+        "en": "A visual writing workbench in the left sidebar: six-stage prompt pipeline, run-the-rest chaining, ruled-paper preview, file attachments, and drafts saved into a per-session folder under the DSH-Writing desk workspace."
+      },
+      "icon": "icon.svg",
+      "author": "powandy",
+      "homepage": "https://github.com/andy2058/dsh-writing-workbench#readme",
+      "repository": {
+        "url": "https://github.com/andy2058/dsh-writing-workbench"
+      },
+      "metadata": {
+        "category": "writing",
+        "keywords": [
+          "dsh",
+          "deepseek-harness",
+          "dsh-plugin",
+          "writing",
+          "wechat",
+          "content",
+          "prompt",
+          "写作",
+          "公众号",
+          "选题",
+          "润色",
+          "老欧"
+        ]
+      },
+      "versions": [
+        {
+          "version": "0.11.2",
+          "publishTimestamp": 1794894459,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/andy2058/dsh-writing-workbench.git",
+            "commit": "34f7d40895ba753b30dcce566c03bc7f7004d2e8"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.3 <0.3.0"
+          }
+        }
+      ]
+    }
+  ]
+}
