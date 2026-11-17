@@ -21,7 +21,8 @@
     "tools",
     "icon.svg",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node tools/build.js",
@@ -41,5 +42,11 @@
         "@deepseek-ai/dsh-client-ui-conversation"
       ]
     }
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andy2058/dsh-writing-workbench.git"
+  },
+  "homepage": "https://github.com/andy2058/dsh-writing-workbench",
+  "license": "MIT"
 }

@@ -8,6 +8,8 @@
 
 插件本身**不做任何模型请求**：发送 = 先把附件上传成 receipt，再调用目标会话的 `session.prompt([{type:'text', text}, {type:'file', receiptId}], 'queue' | 'steer')`，剩下的交给模型。
 
+仓库：<https://github.com/andy2058/dsh-writing-workbench> ｜ 当前版本 **0.11.2** ｜ License: MIT
+
 ---
 
 ## 三个入口
@@ -109,13 +111,38 @@
 
 ## 安装
 
-交给插件管理器安装这个目录（作者侧推荐方式）：
+三种装法，任选一种。
+
+### ① 从 GitHub（换台机器最省事）
+
+```
+plugin_manager install_bundle target=git+https://github.com/andy2058/dsh-writing-workbench.git
+```
+
+### ② 用打好的安装包（离线/内网）
+
+```bash
+# 从仓库下载 dist/lao-ou-dsh-writing-workbench-0.11.2.tgz，然后
+plugin_manager install_bundle target=/absolute/path/to/lao-ou-dsh-writing-workbench-0.11.2.tgz
+```
+
+### ③ 本地开发目录（改代码后只需刷新页面）
 
 ```
 plugin_manager install_bundle target=/absolute/path/to/lao-ou-writing-workbench
 ```
 
-装完刷新网页端：左侧栏多一个「老欧写作工作台」图标，点开就是整页工作台。
+装完刷新网页端：左侧栏多一个「**老欧写作工作台**」图标（排序 8，在「自媒体工作台」和「日程」之间），点开就是整页工作台，标题右侧显示版本号（应看到 `v0.11.2`）。
+
+`package.json` 的 `files` 已包含 `lib/`、`templates/`、`ui/`、`tools/`，所以从 GitHub 或 tgz 装下来也还能用 `node tools/build.js` 重新构建。
+
+### 更新
+
+```
+plugin_manager install_bundle target=git+https://github.com/andy2058/dsh-writing-workbench.git
+```
+
+装完按 ⌘R 刷新页面；标题旁版本号变了就说明换上了。用「本地开发目录」安装时，改 `ui/client.js` 或 `templates/` 后跑 `node tools/build.js`，页面会自动热更新，不必重装。
 
 ### 验证
 
