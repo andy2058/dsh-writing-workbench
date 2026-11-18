@@ -139,6 +139,17 @@
 宿主把它翻成 `quota-exceeded`，状态行会直接写「方舟账号的 Seedream 用量已暂停（安全体验模式/额度上限）…」，
 处理办法是去方舟控制台「开通管理」里调整或关闭安全体验模式 / 提额度。这不是代码问题，也不会扣费。
 
+### 封面存到哪
+
+- 正常情况下：`<会话稿件目录>/cover-YYYYMMDD-HHmmss.png`，例如
+  `/Users/jim2056/DSH-Writing desk/稿件-2026-11-17-2250-3431b0/cover-20261117-2312'40.png`；
+  状态行和封面面板里都会显示完整路径。
+- 会话目录还没建过也没关系（0.12.5+）：工作台会按会话算出目录并自动建好；
+  如果你还没选定会话（新流程），图会落到 `/Users/jim2056/DSH-Writing desk/封面/`。
+- 只允许写进 `~/DSH-Writing desk` 或 `稿件-*` 目录，宿主会拒绝其它路径。
+- 面板里显示的图是方舟返回的临时 URL（24 小时有效）；本地这份 PNG 才是长期可用的。
+- 注意：模型在聊天里自己用 Python 画出来的 `cover-assets/` 不是这里的产物，可删。
+
 技术要点：浏览器不直接访问方舟（避免 CORS），Key 走 `x-ark-key` 请求头；宿主路由 `/api/x-writing-workbench/cover` 注册在 `ctx.connection.fetch` 上，沿用 DSH 的登录态鉴权；落盘只允许写进 `~/DSH-Writing desk` 或 `稿件-*` 目录。
 
 ## 8 个 agent skill
@@ -288,6 +299,7 @@ plugin_manager remove_bundle target=@lao-ou/dsh-writing-workbench
 
 | 版本 | 主要变化 |
 |---|---|
+| 0.12.5 | 封面落盘目录兜底：会话目录没建过也能自动建；没有会话时落到 `DSH-Writing desk/封面/`，状态行显示完整路径 |
 | 0.12.4 | 模型默认改为账号已开通的 Seedream 5.5，5.x 自动用 2K 档位 / 4.x 用像素；429 安全体验模式翻成 `quota-exceeded` 并给出处理办法 |
 | 0.12.0 | 新增第 7 环节「封面生成」：17 种 cover-master 风格 + 蓝图编译提示词 + 火山方舟 seedream 出图并落盘；新增 `lao-ou-cover-design` skill 与宿主生图代理路由 |
 | 0.11.2 | 发布到 GitHub，提供 tgz 安装包；六格刻度与阶段图标配色统一 |

@@ -707,6 +707,9 @@ if (coverBody.autoModel !== true) {
 if (coverBody.model !== 'doubao-seedream-5-5-261028') {
   console.error('RENDER_FAIL: default cover model is not the current seedream id: ' + coverBody.model);
 }
+if (!String(coverBody.folder || '').startsWith('/Users/jim2056/DSH-Writing desk/')) {
+  console.error('RENDER_FAIL: the cover is not pointed at the writing workspace: ' + String(coverBody.folder));
+}
 if (coverBody.size !== '1536x2048' || !String(coverBody.prompt).includes('封面')) {
   console.error('RENDER_FAIL: unexpected cover request body: ' + lastCoverRequest.init.body.slice(0, 200));
   process.exit(1);
