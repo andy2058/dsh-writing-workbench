@@ -108,6 +108,43 @@ if (!/ep-…/.test(modelMissing.body.error.message)) {
   fail('model-not-found message lost the actionable hint: ' + modelMissing.body.error.message)
 }
 
+/* 第一个候选 404、第二个能出图：必须自动往下试，并回报真正生效的模型 */
+const okFetch = globalThis.fetch
+let arkcalls = 0
+globalThis.fetch = async (url, init) => {
+  arkcalls += 1
+  const sent = JSON.parse(init.body)
+  if (sent.model === 'doubao-seedream-4-0-250828') {
+    return new Response(
+      JSON.stringify({ error: { code: 'InvalidEndpointOrModel.NotFound', message: 'The model or endpoint doubao-seedream-4-0-250828 does not exist or you do not have access to it.' } }),
+      { status: 404, headers: { 'content-type': 'application/json' } },
+    )
+  }
+  return new Response(
+    JSON.stringify({ data: [{ url: 'https://ark.example.com/cover.png' }] }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  )
+}
+let fellBack
+try {
+  fellBack = await call(
+    new Request('http://localhost/api/x-writing-workbench/cover', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ark-key': 'test-key' },
+      body: JSON.stringify({ prompt: '一张封面', model: 'doubao-seedream-4-0-250828' }),
+    }),
+  )
+} finally {
+  globalThis.fetch = okFetch
+}
+if (fellBack.body.ok !== true || fellBack.body.model !== 'doubao-seedream-4-5-251128') {
+  fail('auto model fallback did not switch to the next candidate: ' + JSON.stringify(fellBack.body))
+}
+if (arkcalls !== 2) fail('expected exactly 2 Ark attempts, got ' + arkcalls)
+if (!Array.isArray(fellBack.body.tried) || fellBack.body.tried.length !== 2) {
+  fail('tried list missing from a successful fallback: ' + JSON.stringify(fellBack.body))
+}
+
 const wrongMethod = await call(
   new Request('http://localhost/api/x-writing-workbench/cover', { method: 'GET' }),
 )

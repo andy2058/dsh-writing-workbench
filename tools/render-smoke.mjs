@@ -701,6 +701,9 @@ if (lastCoverRequest.init.headers['x-ark-key'] !== 'ark-test-key') {
   console.error('RENDER_FAIL: the Ark key header is missing: ' + JSON.stringify(lastCoverRequest.init.headers));
   process.exit(1);
 }
+if (coverBody.autoModel !== true) {
+  console.error('RENDER_FAIL: cover request should enable auto model fallback by default');
+}
 if (coverBody.model !== 'doubao-seedream-4-0-250828') {
   console.error('RENDER_FAIL: default cover model is not the current seedream id: ' + coverBody.model);
 }
