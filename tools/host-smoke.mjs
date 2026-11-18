@@ -137,12 +137,45 @@ try {
 } finally {
   globalThis.fetch = okFetch
 }
-if (fellBack.body.ok !== true || fellBack.body.model !== 'doubao-seedream-4-5-251128') {
+if (fellBack.body.ok !== true || fellBack.body.model !== 'doubao-seedream-5-5-261028') {
   fail('auto model fallback did not switch to the next candidate: ' + JSON.stringify(fellBack.body))
 }
 if (arkcalls !== 2) fail('expected exactly 2 Ark attempts, got ' + arkcalls)
 if (!Array.isArray(fellBack.body.tried) || fellBack.body.tried.length !== 2) {
   fail('tried list missing from a successful fallback: ' + JSON.stringify(fellBack.body))
+}
+if (fellBack.body.size !== '2K') {
+  fail('5.x seedream must be asked for a 2K tier size, got ' + JSON.stringify(fellBack.body.size))
+}
+
+/* 429「安全体验模式」：必须翻成 quota-exceeded，而不是笼统的 ark-http */
+const quotaFetch = globalThis.fetch
+globalThis.fetch = async () => new Response(
+  JSON.stringify({
+    error: {
+      code: 'SetLimitExceeded',
+      message: 'Your account [2130410782] has reached the set usage limit for the [doubao-seedream-5-5] model, and the model service has been paused. To continue using this model, please visit the Model Activation page to adjust or close the "Safe Experience Mode".',
+    },
+  }),
+  { status: 429, headers: { 'content-type': 'application/json' } },
+)
+let quota
+try {
+  quota = await call(
+    new Request('http://localhost/api/x-writing-workbench/cover', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ark-key': 'test-key' },
+      body: JSON.stringify({ prompt: '一张封面', model: 'doubao-seedream-5-5-261028' }),
+    }),
+  )
+} finally {
+  globalThis.fetch = quotaFetch
+}
+if (quota.body.ok !== false || quota.body.error.code !== 'quota-exceeded') {
+  fail('429 Safe Experience Mode did not become quota-exceeded: ' + JSON.stringify(quota.body))
+}
+if (!/开通管理/.test(quota.body.error.message)) {
+  fail('quota-exceeded message lost the actionable hint: ' + quota.body.error.message)
 }
 
 const wrongMethod = await call(

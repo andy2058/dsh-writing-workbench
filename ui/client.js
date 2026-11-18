@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.12.3'
+    const VERSION = 'v0.12.4'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -51,9 +51,9 @@ window.__ModuleLoader__.load({
     /* 方舟的图片模型 ID 会随版本变化；留一个可编辑输入框，账号里开通了哪个就填哪个，
        也可以直接填控制台里的接入点 ID（ep-…）。 */
     const COVER_MODELS = [
-      { value: 'doubao-seedream-4-0-250828', label: 'Seedream 4.0 · 250828' },
+      { value: 'doubao-seedream-5-5-261028', label: 'Seedream 5.5 · 261028（2K 档位，账号已开通）' },
       { value: 'doubao-seedream-4-5-251128', label: 'Seedream 4.5 · 251128' },
-      { value: 'doubao-seedream-5-5-261028', label: 'Seedream 5.5 · 261028' },
+      { value: 'doubao-seedream-4-0-250828', label: 'Seedream 4.0 · 250828' },
       { value: 'doubao-seedream-3-0-t2i-250415', label: 'Seedream 3.0 · 旧版（多已下线）' },
     ]
 
@@ -254,6 +254,7 @@ window.__ModuleLoader__.load({
         'status.coverDone': '封面已生成',
         'status.coverSaved': '封面已生成并保存到 {path}',
         'status.coverFailed': '封面生成失败：{message}',
+        'status.coverQuota': '方舟账号的 Seedream 用量已暂停（安全体验模式/额度上限）：{message}',
         'status.coverNoKey': '先填火山方舟 API Key 才能出图',
         'label.autoModel': '自动换模型',
         'hint.autoModel': '当前模型报 404（未开通）时，按 4.0 → 4.5 → 5.5 依次重试；404 不计费。出图成功的模型会自动写回上面的输入框。',
@@ -338,6 +339,7 @@ window.__ModuleLoader__.load({
         'status.coverDone': 'Cover generated',
         'status.coverSaved': 'Cover generated and saved to {path}',
         'status.coverFailed': 'Cover generation failed: {message}',
+        'status.coverQuota': 'Your Ark account paused Seedream usage (Safe Experience Mode / quota limit): {message}',
         'status.coverNoKey': 'Fill in the Volcano Ark API key first',
         'label.autoModel': 'Auto-switch model',
         'hint.autoModel': 'On a 404 (model not activated) it retries 4.0 → 4.5 → 5.5; a 404 is not billed. The model that worked is written back into the field above.',
@@ -1245,7 +1247,10 @@ window.__ModuleLoader__.load({
       const [arkModel, setArkModel] = React.useState(() => {
         const savedModel = lsGet(LS + 'arkModel')
         /* 旧默认值在多数账号上已下线（404 does not exist or you do not have access），当作没设置 */
-        if (!savedModel || savedModel === 'doubao-seedream-3-0-t2i-250415') return COVER_MODELS[0].value
+        const legacy = savedModel === 'doubao-seedream-3-0-t2i-250415'
+          || savedModel === 'doubao-seedream-4-0-250828'
+          || savedModel === 'doubao-seedream-4-5-251128'
+        if (!savedModel || legacy) return COVER_MODELS[0].value
         return savedModel
       })
       const [coverBusy, setCoverBusy] = React.useState(false)
@@ -1575,6 +1580,10 @@ window.__ModuleLoader__.load({
           if (!payload || payload.ok !== true) {
             const error = payload && payload.error ? payload.error : {}
             const tried = Array.isArray(error.tried) && error.tried.length > 1 ? error.tried.join(' / ') : ''
+            if (error.code === 'quota-exceeded') {
+              setStatus({ kind: 'error', text: t('status.coverQuota', { message: errorMessage(error) }) })
+              return
+            }
             throw new Error((error.message || 'HTTP ' + response.status) + (tried ? '｜试过：' + tried : ''))
           }
           setCoverResult({
@@ -2330,7 +2339,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 14, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 15, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )

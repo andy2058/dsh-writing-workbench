@@ -704,7 +704,7 @@ if (lastCoverRequest.init.headers['x-ark-key'] !== 'ark-test-key') {
 if (coverBody.autoModel !== true) {
   console.error('RENDER_FAIL: cover request should enable auto model fallback by default');
 }
-if (coverBody.model !== 'doubao-seedream-4-0-250828') {
+if (coverBody.model !== 'doubao-seedream-5-5-261028') {
   console.error('RENDER_FAIL: default cover model is not the current seedream id: ' + coverBody.model);
 }
 if (coverBody.size !== '1536x2048' || !String(coverBody.prompt).includes('封面')) {

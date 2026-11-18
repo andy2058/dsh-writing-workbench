@@ -1,6 +1,6 @@
 {
   "name": "@lao-ou/dsh-writing-workbench",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "private": true,
   "description": "老欧写作工作台：六阶段公众号写作提示词流水线（选题 → 结构 → 润色 → 传播优化 → 标题封面 → 自检），并把同一套提示词注册成 7 个 agent skill。",
   "type": "module",
