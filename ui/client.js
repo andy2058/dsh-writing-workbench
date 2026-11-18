@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.12.1'
+    const VERSION = 'v0.12.2'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -48,9 +48,13 @@ window.__ModuleLoader__.load({
       { value: '3:4', size: '1536x2048', label: '小红书 3:4' },
       { value: '5:2', size: '2048x819', label: '横版 5:2' },
     ]
+    /* 方舟的图片模型 ID 会随版本变化；留一个可编辑输入框，账号里开通了哪个就填哪个，
+       也可以直接填控制台里的接入点 ID（ep-…）。 */
     const COVER_MODELS = [
-      { value: 'doubao-seedream-3-0-t2i-250415', label: 'seedream 3.0 · 快' },
-      { value: 'doubao-seedream-4-0-250828', label: 'seedream 4.0 · 细' },
+      { value: 'doubao-seedream-4-0-250828', label: 'Seedream 4.0 · 250828' },
+      { value: 'doubao-seedream-4-5-251128', label: 'Seedream 4.5 · 251128' },
+      { value: 'doubao-seedream-5-5-261028', label: 'Seedream 5.5 · 261028' },
+      { value: 'doubao-seedream-3-0-t2i-250415', label: 'Seedream 3.0 · 旧版（多已下线）' },
     ]
 
     function coverStyleById(id) {
@@ -243,7 +247,7 @@ window.__ModuleLoader__.load({
         'status.copyFailed': '复制失败，请手动选择文本复制',
         'status.filled': '本阶段已填写',
         'label.coverKey': '火山方舟 API Key（只存在这台电脑的浏览器里）',
-        'hint.coverKey': '在火山方舟控制台建一个 API Key 粘到这里；它只随本次请求发给你本机的 DSH 宿主，不写进配置文件，也不进日志。',
+        'hint.coverKey': '在火山方舟控制台建一个 API Key 粘到这里；只随本次请求发给本机 DSH 宿主，不写配置、不进日志。模型要先在方舟「开通管理」里开通，否则会报 404 does not exist or you do not have access——换版本或填接入点 ID（ep-…）。',
         'action.generateCover': '生成封面',
         'label.coverResult': '封面结果',
         'status.coverBusy': '正在调用豆包 seedream 出图…',
@@ -324,7 +328,7 @@ window.__ModuleLoader__.load({
         'status.copyFailed': 'Copy failed; select the text manually',
         'status.filled': 'Filled in',
         'label.coverKey': 'Volcano Ark API key (kept in this browser only)',
-        'hint.coverKey': 'Create an API key in the Volcano Ark console and paste it here; it travels only with this request to your local DSH host — never into config files or logs.',
+        'hint.coverKey': 'Create an API key in the Volcano Ark console and paste it here; it travels only with this request to your local DSH host — never into config files or logs. The model must be activated under 开通管理 first, otherwise Ark answers 404 does not exist or you do not have access — switch versions or paste an endpoint id (ep-…).',
         'action.generateCover': 'Generate cover',
         'label.coverResult': 'Cover result',
         'status.coverBusy': 'Generating the cover with Doubao seedream…',
@@ -813,7 +817,7 @@ window.__ModuleLoader__.load({
 .lou-wb-cover-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .lou-wb-cover-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .lou-wb-key{flex:1;min-width:180px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
-.lou-wb-model{width:auto;min-width:132px;flex:none}
+.lou-wb-model{flex:0 0 190px;min-width:150px;font-size:11.5px}
 .lou-wb-cover-note{font-size:11.5px;line-height:1.6;color:var(--lou-ink2);padding:8px 10px;
  border-radius:9px;background:color-mix(in srgb,var(--lou-brand) 8%,transparent)}
 .lou-wb-cover-result{display:flex;flex-direction:column;gap:6px;margin-top:2px}
@@ -1230,7 +1234,12 @@ window.__ModuleLoader__.load({
       const [dragOver, setDragOver] = React.useState(false)
       const fileInputRef = React.useRef(null)
       const [arkKey, setArkKey] = React.useState(() => lsGet(LS + 'ark') || '')
-      const [arkModel, setArkModel] = React.useState(() => lsGet(LS + 'arkModel') || COVER_MODELS[0].value)
+      const [arkModel, setArkModel] = React.useState(() => {
+        const savedModel = lsGet(LS + 'arkModel')
+        /* 旧默认值在多数账号上已下线（404 does not exist or you do not have access），当作没设置 */
+        if (!savedModel || savedModel === 'doubao-seedream-3-0-t2i-250415') return COVER_MODELS[0].value
+        return savedModel
+      })
       const [coverBusy, setCoverBusy] = React.useState(false)
       const [coverResult, setCoverResult] = React.useState(null)
 
@@ -2029,13 +2038,19 @@ window.__ModuleLoader__.load({
               autoComplete: 'off',
               onChange: (event) => setArkKey(event.target.value),
             }),
+            h('input', {
+              className: 'lou-wb-input lou-wb-model',
+              type: 'text',
+              value: arkModel,
+              list: 'writing-workbench-cover-models',
+              placeholder: 'doubao-seedream-4-0-250828 或 ep-…',
+              spellCheck: false,
+              autoComplete: 'off',
+              onChange: (event) => setArkModel(event.target.value),
+            }),
             h(
-              'select',
-              {
-                className: 'lou-wb-input lou-wb-select-field lou-wb-model',
-                value: arkModel,
-                onChange: (event) => setArkModel(event.target.value),
-              },
+              'datalist',
+              { id: 'writing-workbench-cover-models' },
               COVER_MODELS.map((item) => h('option', { key: item.value, value: item.value }, item.label)),
             ),
             h(
@@ -2279,7 +2294,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 12, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 13, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )

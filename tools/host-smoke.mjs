@@ -78,6 +78,36 @@ if (noPrompt.body.ok !== false || noPrompt.body.error.code !== 'empty-prompt') {
   fail('empty prompt did not produce empty-prompt: ' + JSON.stringify(noPrompt.body))
 }
 
+/* 404 模型不可用：宿主必须把它翻成可执行的 model-not-found，而不是裸 ark-http */
+const realFetch = globalThis.fetch
+globalThis.fetch = async () => new Response(
+  JSON.stringify({
+    error: {
+      code: 'InvalidEndpointOrModel.NotFound',
+      message: 'The model or endpoint doubao-seedream-3-0-t2i-250415 does not exist or you do not have access to it.',
+    },
+  }),
+  { status: 404, headers: { 'content-type': 'application/json' } },
+)
+let modelMissing
+try {
+  modelMissing = await call(
+    new Request('http://localhost/api/x-writing-workbench/cover', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ark-key': 'test-key' },
+      body: JSON.stringify({ prompt: '一张封面', model: 'doubao-seedream-3-0-t2i-250415' }),
+    }),
+  )
+} finally {
+  globalThis.fetch = realFetch
+}
+if (modelMissing.body.ok !== false || modelMissing.body.error.code !== 'model-not-found') {
+  fail('404 from Ark did not become model-not-found: ' + JSON.stringify(modelMissing.body))
+}
+if (!/ep-…/.test(modelMissing.body.error.message)) {
+  fail('model-not-found message lost the actionable hint: ' + modelMissing.body.error.message)
+}
+
 const wrongMethod = await call(
   new Request('http://localhost/api/x-writing-workbench/cover', { method: 'GET' }),
 )
@@ -91,5 +121,5 @@ if (effects.length !== skills.length + 1) {
 
 console.log('skills       :', skills.length, '→', skills.map((skill) => skill.name).join(', '))
 console.log('route        :', route.methods.join(','), route.path, '(' + route.requestBody + ')')
-console.log('error codes  : missing-key / empty-prompt / method-not-allowed 全部就位')
+console.log('error codes  : missing-key / empty-prompt / model-not-found / method-not-allowed 全部就位')
 console.log('HOST_OK')

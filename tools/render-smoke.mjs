@@ -701,10 +701,36 @@ if (lastCoverRequest.init.headers['x-ark-key'] !== 'ark-test-key') {
   console.error('RENDER_FAIL: the Ark key header is missing: ' + JSON.stringify(lastCoverRequest.init.headers));
   process.exit(1);
 }
+if (coverBody.model !== 'doubao-seedream-4-0-250828') {
+  console.error('RENDER_FAIL: default cover model is not the current seedream id: ' + coverBody.model);
+}
 if (coverBody.size !== '1536x2048' || !String(coverBody.prompt).includes('封面')) {
   console.error('RENDER_FAIL: unexpected cover request body: ' + lastCoverRequest.init.body.slice(0, 200));
   process.exit(1);
 }
+/* 模型 ID 可手填（旧 ID 会 404）：改成接入点 ID 后请求体要跟着变 */
+const modelInput = findNode(
+  coverView.tree,
+  (node) => node.tag === 'input' && node.props && node.props.list === 'writing-workbench-cover-models',
+);
+if (!modelInput) {
+  console.error('RENDER_FAIL: the cover model field is not an editable input with a datalist');
+} else {
+  modelInput.props.onChange({ target: { value: 'ep-20261117-test' } });
+  const modelView = rerender(PAGE, pageProps);
+  const modelButton = findNode(
+    modelView.tree,
+    (node) => node.tag === 'button' && flatten(node).join('') === dicts.zh['action.generateCover'],
+  );
+  lastCoverRequest = null;
+  modelButton.props.onClick();
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  const typedBody = JSON.parse(lastCoverRequest.init.body);
+  if (typedBody.model !== 'ep-20261117-test') {
+    console.error('RENDER_FAIL: typed model id did not reach the host: ' + typedBody.model);
+  }
+}
+
 const coverAfter = rerender(PAGE, pageProps);
 if (!coverAfter.text.includes('封面已生成')) {
   console.error('RENDER_FAIL: cover status line missing, tail: ' + coverAfter.text.slice(-160));

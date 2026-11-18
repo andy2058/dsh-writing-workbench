@@ -102,7 +102,27 @@
 3. 选画幅：公众号头图 `2.35:1`（2048×872）/ 小红书 `3:4`（1536×2048）/ 横版 `5:2`（2048×819）；
 4. 预览区就是编译好的**最终图片提示词**（按 cover-master 蓝图：风格编译 → 构图 → 文字系统 → 质感光线 → 禁止项），可以手改；
 5. 第一次用先粘一次**火山方舟 API Key**（只存在这台电脑的浏览器 localStorage，随请求发给你本机宿主，不写配置文件、不进日志）；
-6. 点「生成封面」→ 宿主代理调用方舟 `images/generations`（默认 `doubao-seedream-3-0-t2i-250415`，可切 `doubao-seedream-4-0-250828`）→ 出图后自动存进本次会话的稿件目录，状态行显示落盘路径。
+6. 点「生成封面」→ 宿主代理调用方舟 `images/generations` → 出图后自动存进本次会话的稿件目录，状态行显示落盘路径。
+
+### 模型 ID 怎么填（0.12.2+）
+
+模型框是**可编辑输入框**，带下拉候选，也可以直接粘接入点 ID：
+
+| 候选 | 说明 |
+|---|---|
+| `doubao-seedream-4-0-250828` | 默认，多数账号可用 |
+| `doubao-seedream-4-5-251128` | 4.5 |
+| `doubao-seedream-5-5-261028` | 5.5（文档示例用的就是它） |
+| `ep-xxxxxxxx` | 控制台「在线推理」里的接入点 ID |
+
+方舟的模型必须先在你账号里**开通**，否则返回 404
+`The model or endpoint … does not exist or you do not have access to it`。这时：
+
+1. 去 [方舟控制台 → 开通管理](https://console.volcengine.com/ark) 开通对应 Seedream 版本（图片生成）；
+2. 或回工作台换一个候选 / 粘贴你自己的 `ep-…` 接入点 ID。
+
+宿主会把这类 404 翻成 `model-not-found`，状态行会直接写「方舟不认识模型「xxx」（404）… 到方舟控制台开通…或填接入点 ID」。
+注意：旧默认值 `doubao-seedream-3-0-t2i-250415` 在多数账号已下线，0.12.2 起会把你浏览器里存的旧默认值自动迁移掉。
 
 技术要点：浏览器不直接访问方舟（避免 CORS），Key 走 `x-ark-key` 请求头；宿主路由 `/api/x-writing-workbench/cover` 注册在 `ctx.connection.fetch` 上，沿用 DSH 的登录态鉴权；落盘只允许写进 `~/DSH-Writing desk` 或 `稿件-*` 目录。
 
