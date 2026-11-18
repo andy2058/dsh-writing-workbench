@@ -169,6 +169,18 @@
 
 ---
 
+## 发布（维护者）
+
+本机 `github.com:443` 被网络阻断、但 `api.github.com` 可用，所以推送走 GitHub Git Data API：
+
+```bash
+TOKEN=<pat> node tools/push-api.mjs <本地基点> <远端父提交> HEAD
+```
+
+它把本地新提交逐个重放到远端之上（远端 SHA 与本地不同，因为父链被重写），最后 fast-forward `main`。
+发版流程：改版本号 → `npm run verify` → `git commit` → 用上面的脚本推送 → 更新 `index.json` 的
+`version` / `publishTimestamp` / `source.commit`（指向远端提交）再推一次 → 打 tag。
+
 ## 安装
 
 四种装法，任选一种。
