@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.12.5'
+    const VERSION = 'v0.12.6'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -102,7 +102,7 @@ window.__ModuleLoader__.load({
         '该风格不是装饰滤镜。封面的每个关键决策都必须通过该风格的视觉语言实现。',
         '',
         '## 输入',
-        `- 标题 / 主题：${title || '（见摘要）'}`,
+        `- 标题 / 主题：${title || shortTitle || '（未提供，按摘要做纯画面封面）'}`,
         `- A 层 / 主视觉标题：${shortTitle || '（见标题）'}`,
         subtitle ? `- C 层 / 副标题或小字：${subtitle}` : '- C 层 / 副标题或小字：无，小字只保留极少量编号或标签',
         `- 平台：${platform}`,
@@ -137,9 +137,13 @@ window.__ModuleLoader__.load({
         '- 画面必须从版式结构内部生长出来，而不是"照片贴在排字上"。',
         '',
         '## 文字系统',
-        `- 画面中只出现这些文字，逐字照抄，中文用中文引号：主标题「“${shortTitle || title}”」${subtitle ? `，副标题「“${subtitle}”」` : ''}。`,
+        (shortTitle || title)
+          ? `- 画面中只出现这些文字，逐字照抄，中文用中文引号：主标题「“${shortTitle || title}”」${subtitle ? `，副标题「“${subtitle}”」` : ''}。`
+          : '- 本次不排标题文字：画面只做视觉表达，不要凭空生成任何标题、标语或英文字。',
         '- 中文用与风格匹配的字重与字形（黑体/宋体/几何窄体按风格要求），字要真排出来，不是乱码、不是伪文字、不是英文占位。',
-        '- 字与图的关系按风格定义处理：字可被图像穿过、切分、压在实体上，但每个字都必须可读。',
+        (shortTitle || title)
+          ? '- 字与图的关系按风格定义处理：字可被图像穿过、切分、压在实体上，但每个字都必须可读。'
+          : '',
         '- 不要出现任何额外文字：无水印、无 logo、无二维码、无页码、无英文标语。',
         '',
         '## 质感与光线',
@@ -542,8 +546,7 @@ window.__ModuleLoader__.load({
         fields: [
           {
             key: 'title',
-            label: '封面标题（整张图的主题）',
-            required: true,
+            label: '封面标题（可选，留空则只做画面）',
             placeholder: '例如：中年转行，先算清这三笔账',
           },
           { key: 'shortTitle', label: '主视觉标题（A 层，短一点更有力）', placeholder: '留空则用封面标题' },
@@ -2354,7 +2357,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 16, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 17, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )

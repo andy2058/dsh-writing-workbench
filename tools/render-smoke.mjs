@@ -316,6 +316,36 @@ for (const stageId of ['topic', 'structure', 'polish', 'spread', 'title', 'check
 }
 
 /* 点一次「发送到会话」：验证拼装结果与 session.prompt 的调用参数 */
+/* 封面标题不再是必填：留空时提示词不能留空引号，要变成纯画面 */
+window.localStorage.setItem('dsh.writing-workbench.stage', 'cover');
+window.localStorage.setItem(
+  'dsh.writing-workbench.values:cover',
+  JSON.stringify({ summary: '转行不是勇气问题，是现金流问题。', style: 'black-red-silhouette', ratio: '3:4' }),
+);
+const noTitleView = render(PAGE, pageProps);
+const noTitleArea = findNode(
+  noTitleView.tree,
+  (node) => node.tag === 'textarea' && String(node.props.className || '').indexOf('lou-wb-preview') !== -1,
+);
+const noTitlePrompt = noTitleArea ? String(noTitleArea.props.value || '') : '';
+if (!noTitlePrompt.includes('本次不排标题文字')) {
+  console.error('RENDER_FAIL: an empty cover title should switch the text system to image-only');
+}
+if (noTitlePrompt.includes('主标题「“') && noTitlePrompt.includes('”」')) {
+  console.error('RENDER_FAIL: empty cover title still emits empty quotes');
+}
+window.localStorage.setItem('dsh.writing-workbench.stage', 'pipeline');
+window.localStorage.setItem(
+  'dsh.writing-workbench.values:cover',
+  JSON.stringify({
+    title: '中年转行，先算清这三笔账',
+    shortTitle: '三笔账',
+    summary: '转行不是勇气问题，是现金流问题。',
+    style: 'black-red-silhouette',
+    ratio: '3:4',
+  }),
+);
+
 window.localStorage.setItem('dsh.writing-workbench.stage', 'pipeline');
 window.localStorage.setItem(
   'dsh.writing-workbench.values:pipeline',
