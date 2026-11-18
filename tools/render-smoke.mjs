@@ -690,7 +690,7 @@ if (!styleSelect) {
   console.error('RENDER_FAIL: no select with 17 cover styles, option counts: ' + sizes.join(','));
   process.exit(1);
 }
-const ratioSelect = coverSelects.find((node) => node !== styleSelect && findAll(node, (item) => item.tag === 'option').length === 3);
+const ratioSelect = coverSelects.find((node) => node !== styleSelect && findAll(node, (item) => item.tag === 'option').length === 4);
 if (!ratioSelect) {
   console.error('RENDER_FAIL: the ratio select is missing');
   process.exit(1);
@@ -800,6 +800,28 @@ function findNode(node, predicate) {
   }
   if (predicate(node)) return node;
   return findNode(node.children || [], predicate);
+}
+
+/* 16:9 公众号封面图：提示词要带 16:9 与 2048x1152 */
+window.localStorage.setItem('dsh.writing-workbench.stage', 'cover');
+window.localStorage.setItem(
+  'dsh.writing-workbench.values:cover',
+  JSON.stringify({
+    title: '中年转行，先算清这三笔账',
+    shortTitle: '三笔账',
+    summary: '转行不是勇气问题，是现金流问题。',
+    style: 'black-red-silhouette',
+    ratio: '16:9',
+  }),
+);
+const ratioView = render(PAGE, pageProps);
+const ratioArea = findNode(
+  ratioView.tree,
+  (node) => node.tag === 'textarea' && String(node.props.className || '').indexOf('lou-wb-preview') !== -1,
+);
+const ratioPrompt = ratioArea ? String(ratioArea.props.value || '') : '';
+if (!ratioPrompt.includes('16:9') || !ratioPrompt.includes('2048x1152')) {
+  console.error('RENDER_FAIL: the 16:9 cover ratio did not reach the prompt');
 }
 
 console.log('components   :', [...capturedComponents.keys()].join(', '));

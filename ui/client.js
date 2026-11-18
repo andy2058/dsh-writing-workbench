@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.12.6'
+    const VERSION = 'v0.12.7'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -46,6 +46,7 @@ window.__ModuleLoader__.load({
     /* ---------- 封面：比例、模型、提示词编译 ---------- */
     const COVER_RATIOS = [
       { value: '2.35:1', size: '2048x872', label: '公众号头图 2.35:1' },
+      { value: '16:9', size: '2048x1152', label: '公众号封面图 16:9' },
       { value: '3:4', size: '1536x2048', label: '小红书 3:4' },
       { value: '5:2', size: '2048x819', label: '横版 5:2' },
     ]
@@ -75,6 +76,7 @@ window.__ModuleLoader__.load({
     function coverPlatformOf(ratio) {
       if (ratio === '3:4') return '小红书'
       if (ratio === '5:2') return 'X / 横版社媒'
+      if (ratio === '16:9') return '公众号封面图（16:9 视频号封面同构图通用）'
       return '公众号'
     }
 
@@ -2357,7 +2359,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 17, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 18, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )
