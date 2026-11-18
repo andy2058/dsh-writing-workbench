@@ -72,7 +72,7 @@ mod.apply(ctx);
 /* 1. 三个注册点：左侧栏图标 + 中央页面 + 输入框入口 */
 const byOwner = new Map(registrations.map((r) => [r.owner, r.result.registered]));
 const expected = [
-  ['sidebar.panellist', 'writing-workbench', 9],
+  ['sidebar.panellist', 'writing-workbench', 12],
   ['main', 'writing-workbench', undefined],
   ['conversation.input.right', 'lou-writing-workbench', 20],
 ];
@@ -120,6 +120,20 @@ const tokensLive = new Set([
 ]);
 const unknown = [...tokensUsed].filter((token) => !tokensLive.has(token));
 if (unknown.length > 0) fail('theme tokens not registered in this build: ' + unknown.join(', '));
+
+/* 4b. 每个在渲染里用到的 .lou-wb-* 类都必须在 CSS 里有一条规则（防止"加了面板忘了加样式"） */
+const cssStart = source.indexOf('const CSS = `');
+const cssEnd = source.indexOf('`', cssStart + 13);
+const cssText = cssStart >= 0 && cssEnd > cssStart ? source.slice(cssStart, cssEnd) : '';
+const cssClasses = new Set([...cssText.matchAll(/\.(lou-wb-[a-z0-9-]+)/g)].map((m) => m[1]));
+const usedClasses = new Set();
+for (const match of source.matchAll(/'((?:lou-wb-[a-z0-9-]+(?:\s+[a-z0-9-]+)*))'/g)) {
+  for (const part of match[1].split(/\s+/)) if (part.startsWith('lou-wb-')) usedClasses.add(part);
+}
+const unstyled = [...usedClasses].filter((name) => !cssClasses.has(name));
+if (unstyled.length > 0) {
+  fail('classes used in markup but never styled: ' + unstyled.join(', '));
+}
 
 /* 5. 附件上传：先走与输入框附件相同的流式链路（把 File 交给 fileUpload 服务），
       失败再退 base64 RPC，最后直连上传接口；三层都失败时把原因全部带回 */

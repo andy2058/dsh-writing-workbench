@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.12.0'
+    const VERSION = 'v0.12.1'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -212,6 +212,8 @@ window.__ModuleLoader__.load({
 'action.sendSteer': '发送并打断',
         'action.runRemaining': '⚡ 一键跑完后续',
         'action.runRemainingTip': '从「{stage}」开始，把剩下的 {total} 个环节一次排队发出去，模型会连续跑完，不用你再点',
+        'note.coverGuide': '（下面是封面图片提示词，用来交给豆包 seedream 出图。请只做两件事：① 评估它是否准确表达了标题与摘要；② 给出改进版提示词。不要用 Python／PIL／Canvas／SVG 自行绘制封面，也不要声称已经生成图片——封面图由工作台的「生成封面」按钮直接调用豆包输出。）',
+        'hint.coverPanel': '「生成封面」= 直接调豆包 seedream 出图并落盘；把提示词发给模型，只会得到文字建议，模型不会画图。',
         'note.chain': '【连续执行 {index}/{total}】本环节是「{stage}」。请直接基于上文已有的产物继续，不要停下来问我、不要重复确认。信息不足就用最合理的推断，并在结尾用一行注明「假设：…」。按本环节要求的格式输出，最后另起一行写「▶ 下一步：<下一环节>」。',
         'status.chainSent': '已排队 {done}/{total} 个环节…',
         'status.chainDone': '已按顺序发出 {count}/{total} 个环节，「{title}」里会连续跑完',
@@ -291,6 +293,8 @@ window.__ModuleLoader__.load({
 'action.sendSteer': 'Send & interrupt',
         'action.runRemaining': '⚡ Run the rest',
         'action.runRemainingTip': 'Starting at “{stage}”, queue the remaining {total} stage(s) so the model runs them back to back',
+        'note.coverGuide': '(Below is an image prompt meant for Doubao seedream. Do exactly two things: ① judge whether it expresses the title and summary accurately; ② give an improved prompt. Do NOT render the cover yourself with Python/PIL/Canvas/SVG, and do not claim an image was generated — the image comes from the workbench’s “Generate cover” button, which calls Doubao directly.)',
+        'hint.coverPanel': '“Generate cover” calls Doubao seedream and saves the file; sending the prompt to the model only returns text advice — the model cannot draw images.',
         'note.chain': '[Chained run {index}/{total}] This step is “{stage}”. Continue directly from what is already in the thread; do not stop to ask me and do not re-confirm. If something is missing, infer the most reasonable reading and close with one line “假设：…”. Follow this step’s format, then end with a line “▶ 下一步：<next stage>”.',
         'status.chainSent': 'Queued {done}/{total} stages…',
         'status.chainDone': 'Queued {count}/{total} stages in order — “{title}” will run them back to back',
@@ -633,6 +637,7 @@ window.__ModuleLoader__.load({
  transition:background .15s ease,color .15s ease,border-color .15s ease;white-space:nowrap}
 .lou-wb-trigger:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
 .lou-wb-trigger-icon{font-size:13px;line-height:1;transform:translateY(-.5px)}
+.lou-wb-trigger-text{font-size:11.5px;line-height:1;letter-spacing:.2px}
 .lou-wb-fileinput{display:none}
 
 .lou-wb-page{
@@ -801,6 +806,22 @@ window.__ModuleLoader__.load({
 .lou-wb-file-remove:hover{color:var(--dsw-alias-state-error-primary);
  background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent)}
 
+.lou-wb-select-field{width:100%;height:32px;padding:0 8px;font-size:12.5px}
+.lou-wb-cover{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding:12px 13px;
+ border-radius:12px;border:1px dashed color-mix(in srgb,var(--lou-brand) 38%,var(--lou-line2));
+ background:color-mix(in srgb,var(--lou-brand) 4%,transparent)}
+.lou-wb-cover-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lou-wb-cover-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lou-wb-key{flex:1;min-width:180px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.lou-wb-model{width:auto;min-width:132px;flex:none}
+.lou-wb-cover-note{font-size:11.5px;line-height:1.6;color:var(--lou-ink2);padding:8px 10px;
+ border-radius:9px;background:color-mix(in srgb,var(--lou-brand) 8%,transparent)}
+.lou-wb-cover-result{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+.lou-wb-cover-img{width:100%;max-height:340px;object-fit:contain;border-radius:9px;
+ border:1px solid var(--lou-line);background:var(--lou-soft)}
+.lou-wb-cover-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--lou-ink3)}
+.lou-wb-cover-path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
+ color:var(--lou-ink2);word-break:break-all}
 .lou-wb-foot{flex:none;z-index:4;display:flex;align-items:center;gap:10px;
  padding:9px clamp(14px,2vw,22px);border-top:1px solid var(--lou-line);
  background:color-mix(in srgb,var(--lou-card) 88%,transparent);backdrop-filter:blur(16px) saturate(150%)}
@@ -1552,7 +1573,8 @@ window.__ModuleLoader__.load({
       }
 
       async function send(sendMode) {
-        const text = preview.trim()
+        const base = preview.trim()
+        const text = stageId === 'cover' ? t('note.coverGuide') + '\n\n' + base : base
         if (text === '') {
           setStatus({ kind: 'error', text: t('status.empty') })
           return
@@ -1634,8 +1656,9 @@ window.__ModuleLoader__.load({
               const tpl = loadTemplateOverride(item.id) || TEMPLATES[item.id] || ''
               body = ready ? item.compose(stageValues, tpl) : tpl
             }
+            const guided = item.id === 'cover' ? t('note.coverGuide') + '\n\n' + body : body
             const text = withNotes(
-              body + '\n\n' + t('note.chain', {
+              guided + '\n\n' + t('note.chain', {
                 index: String(index + 1),
                 total: String(total),
                 stage: item.name,
@@ -2026,6 +2049,7 @@ window.__ModuleLoader__.load({
               coverBusy ? t('status.coverBusy') : t('action.generateCover'),
             ),
           ),
+          h('div', { className: 'lou-wb-cover-note' }, t('hint.coverPanel')),
           coverResult
             ? h(
               'div',
@@ -2255,7 +2279,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 9, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 12, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )
