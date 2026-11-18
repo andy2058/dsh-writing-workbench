@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.12.7'
+    const VERSION = 'v0.13.0'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -385,7 +385,67 @@ window.__ModuleLoader__.load({
     }
 
     /* ---------- 六个写作阶段 + 一条龙 ---------- */
+    const TOPIC_MODES = [
+      { value: 'link', label: '链接（公众号 / 知乎 / 新闻 / 视频页）' },
+      { value: 'file', label: '文件或附件（md / txt / pdf / docx / 截图）' },
+      { value: 'material', label: '一屏素材（评论 / 私信 / 群聊 / 经历）' },
+      { value: 'keyword', label: '关键词或一句话题' },
+      { value: 'radar', label: '什么都没给（让我自己找热点）' },
+    ]
+
+    const TOPIC_MODE_HINT = {
+      link: '④ 来源精读（链接）：先用 web_fetch 抓正文，抓不到再降级 research / web_search',
+      file: '④ 来源精读（本地文件）：先确认路径、再分段读完，PDF/Word 先转文字',
+      material: '③ 素材挖掘：从这屏素材里提炼选题',
+      keyword: '② 关键词选题：围绕这个关键词找角度',
+      radar: '① 热点雷达：从近期热点里找值得写的选题',
+    }
+
     const STAGES = [
+      {
+        id: 'material',
+        num: '⓪',
+        short: '选题',
+        name: '选题专家（先定写什么）',
+        blurb: '从链接、文件、素材或关键词里读出可写的选题，给角度、弹药方向与评分。',
+        fields: [
+          {
+            key: 'mode',
+            label: '入口类型',
+            kind: 'select',
+            options: TOPIC_MODES,
+          },
+          {
+            key: 'source',
+            label: '材料入口（链接 / 文件路径 / 关键词）',
+            placeholder: '例如：https://mp.weixin.qq.com/s/xxx  或  03.写作skill/素材.docx  或  AI 编程',
+          },
+          {
+            key: 'material',
+            label: '素材正文（可选，一屏评论 / 聊天记录 / 摘录贴这里）',
+            kind: 'textarea',
+            rows: 5,
+            placeholder: '直接粘贴原文、评论区、私信、群聊记录…',
+          },
+          {
+            key: 'focus',
+            label: '想要的方向（可选）',
+            placeholder: '例如：面向中年转型的读者；想要反直觉的角度',
+          },
+        ],
+        compose(v, tpl) {
+          const mode = v.mode || TOPIC_MODES[0].value
+          const hint = TOPIC_MODE_HINT[mode] || TOPIC_MODE_HINT.link
+          const parts = [tpl, '\n\n---\n\n**本次入口**：' + hint]
+          if (v.source) parts.push('\n**材料位置**：' + v.source)
+          if (v.material) parts.push('\n\n**素材正文**：\n' + v.material)
+          if (v.focus) parts.push('\n\n**想要的方向**：' + v.focus)
+          if (!v.source && !v.material && mode !== 'radar') {
+            parts.push('\n\n（用户没有填具体入口，请先按入口类型的默认方式开工；必要时在假设清单里说明。）')
+          }
+          return parts.join('')
+        },
+      },
       {
         id: 'topic',
         num: '①',
@@ -2359,7 +2419,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 18, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 19, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )

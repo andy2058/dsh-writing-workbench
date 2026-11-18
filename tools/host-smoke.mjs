@@ -1,5 +1,5 @@
 /* 宿主端冒烟：不需要真实服务器，直接调 lib/index.js 的 apply()，检查
-   ① 8 个 skill 都注册了  ② 生图路由按 connection.fetch.register 的契约注册
+   ① 9 个 skill 都注册了  ② 生图路由按 connection.fetch.register 的契约注册
    ③ 路由的错误分支返回可读的 code（缺 key / 缺提示词 / 非法方法） */
 import { apply } from '../lib/index.js'
 
@@ -38,9 +38,13 @@ function fail(message) {
   process.exit(1)
 }
 
-if (skills.length !== 8) fail('expected 8 skills, got ' + skills.length)
+if (skills.length !== 9) fail('expected 9 skills, got ' + skills.length)
 const coverSkill = skills.find((skill) => skill.name === 'lao-ou-cover-design')
 if (!coverSkill) fail('lao-ou-cover-design skill is missing')
+const topicSkill = skills.find((skill) => skill.name === 'lao-ou-topic-expert')
+if (!topicSkill) fail('lao-ou-topic-expert skill is missing')
+if (!String(topicSkill.content).includes('老欧拾光记 · 选题专家')) fail('topic expert skill content is not the merged copy')
+if (topicSkill.provider !== 'dsh-writing-workbench') fail('topic expert should ship from the workbench provider')
 if (!coverSkill.content.includes('cover prompt')) fail('cover skill content lost the blueprint')
 if (!coverSkill.content.includes('minimal-visual-metaphor')) fail('cover skill content lost the style digest')
 

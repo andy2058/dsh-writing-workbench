@@ -62,6 +62,13 @@ const STAGES = [
   },
 ]
 
+const TOPIC_EXPERT = {
+  file: 'topic-expert.md',
+  skill: 'lao-ou-topic-expert',
+  description: '老欧拾光记选题专家：把一个链接、一个文件、一段素材或一个关键词，读成一份可写的选题清单（主题、切入角度、目标读者、弹药方向、标题方向、百分制评分与原文依据）。只负责「写什么」，不代写文章。',
+  whenToUse: '用户给了文章链接、本地文件、评论区/私信素材或一个关键词，问「能写什么 / 找几个选题 / 今天写什么」时使用。',
+}
+
 const COVER = {
   skill: 'lao-ou-cover-design',
   description: '老欧拾光记·封面生成：按 cover-master 的封面提示词蓝图，把用户选定的 17 种风格原子编译成一条完整图片生成提示词，并调用豆包（火山方舟 seedream）出图。',
@@ -84,7 +91,7 @@ const source = readFileSync(join(ROOT, 'ui', 'client.js'), 'utf8')
 const MARK = '/*__TEMPLATES__*/'
 const occurrences = source.split(MARK).length - 1
 if (occurrences !== 1) throw new Error(`ui/client.js 应恰好包含 1 个模板占位符 ${MARK}，实际 ${occurrences} 个`)
-const body = [...STAGES, { id: 'pipeline', file: PIPELINE.file }, { id: 'cover', file: '07-封面生成.txt' }].map((stage) => {
+const body = [{ id: 'material', file: '00-选题专家.txt' }, ...STAGES, { id: 'pipeline', file: PIPELINE.file }, { id: 'cover', file: '07-封面生成.txt' }].map((stage) => {
   const text = readTemplate(stage.file)
   return `      ${JSON.stringify(stage.id)}: ${JSON.stringify(text)},`
 }).join('\n')
@@ -189,6 +196,14 @@ for (const stage of STAGES) {
     content: readTemplate(stage.file).trim(),
   })
 }
+skills.push({
+  name: TOPIC_EXPERT.skill,
+  description: TOPIC_EXPERT.description,
+  whenToUse: TOPIC_EXPERT.whenToUse,
+  source: 'bundled',
+  provider: PROVIDER,
+  content: readTemplate(TOPIC_EXPERT.file).trim(),
+})
 skills.push({
   name: COVER.skill,
   description: COVER.description,

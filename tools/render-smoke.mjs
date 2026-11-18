@@ -824,6 +824,27 @@ if (!ratioPrompt.includes('16:9') || !ratioPrompt.includes('2048x1152')) {
   console.error('RENDER_FAIL: the 16:9 cover ratio did not reach the prompt');
 }
 
+/* ⓪ 选题专家：入口类型 + 材料位置要进提示词，且要求调用 lao-ou-topic-expert skill */
+window.localStorage.setItem('dsh.writing-workbench.stage', 'material');
+window.localStorage.setItem(
+  'dsh.writing-workbench.values:material',
+  JSON.stringify({
+    mode: 'link',
+    source: 'https://mp.weixin.qq.com/s/abc123',
+    focus: '面向中年转型读者',
+  }),
+);
+const topicView = render(PAGE, pageProps);
+const topicArea = findNode(
+  topicView.tree,
+  (node) => node.tag === 'textarea' && String(node.props.className || '').indexOf('lou-wb-preview') !== -1,
+);
+const topicPrompt = topicArea ? String(topicArea.props.value || '') : '';
+for (const needle of ['lao-ou-topic-expert', '本次入口', 'https://mp.weixin.qq.com/s/abc123', '面向中年转型读者']) {
+  if (!topicPrompt.includes(needle)) {
+    console.error('RENDER_FAIL: the topic-expert prompt is missing: ' + needle);
+  }
+}
 console.log('components   :', [...capturedComponents.keys()].join(', '));
 console.log('send path    :', 'session ' + sent.sessionId + ' / mode ' + sent.mode + ' / ' + sent.content[0].text.length + ' chars → session.prompt');
 console.log('upload path  :', 'service receipt ' + serviceReceipt + ' + http fallback receipt rcpt-http → session.prompt');
