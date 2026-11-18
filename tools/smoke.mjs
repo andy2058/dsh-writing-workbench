@@ -72,7 +72,7 @@ mod.apply(ctx);
 /* 1. 三个注册点：左侧栏图标 + 中央页面 + 输入框入口 */
 const byOwner = new Map(registrations.map((r) => [r.owner, r.result.registered]));
 const expected = [
-  ['sidebar.panellist', 'writing-workbench', 20],
+  ['sidebar.panellist', 'writing-workbench', 21],
   ['main', 'writing-workbench', undefined],
   ['conversation.input.right', 'lou-writing-workbench', 20],
 ];
@@ -187,6 +187,14 @@ for (const needle of [
 }
 if (!source.includes("lcSet") && !source.includes("lsSet(LS + 'target', sendTarget)")) {
   fail('new-flow mode must remember the session it created');
+}
+
+/* 6d. 环节名统一三字：所有 stage.short 都是 3 个字符 */
+for (const key of stageKeys) {
+  const block = source.slice(source.indexOf(`id: '${key}'`));
+  const m = /short: '([^']+)'/.exec(block.slice(0, 400));
+  if (!m) throw new Error('SMOKE_FAIL: missing short for stage ' + key);
+  if ([...m[1]].length !== 3) throw new Error('SMOKE_FAIL: stage ' + key + ' short is not 3 chars: ' + m[1]);
 }
 
 /* 6b. 环节顺序：找选题 → 定角度 → 结构 → 润色 → 传播优化 → 自检 → 标题 → 封面 */

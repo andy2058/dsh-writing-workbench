@@ -2,7 +2,9 @@
 
 把「老欧拾光记」公众号写作的六阶段提示词流水线装进 DeepSeek Harness 网页端，做成**左侧栏里的可视化操作页**：
 
-**⓪ 找选题 → 🎯 一键全流程 → ① 定角度（黑天鹅版）→ ② 写作结构（SUCCESs 版）→ ③ 文章润色 → ④ 传播优化改造 → ⑤ 文章自检（L1–L4）→ ⑥ 标题与封面摘要**（先自检、最后出标题）
+**⓪ 找选题 → 🎯 跑全程 → ① 定角度 → ② 搭结构 → ③ 磨文字 → ④ 促转发 → ⑤ 过自检 → ⑥ 起标题 → ⑦ 做封面**
+
+九个环节名全部三字，侧栏轨道上一排对齐，竖着看就是一条流水线；每格下面的小字才是这一环的具体做法。
 
 左侧栏点「老欧写作工作台」图标，中央区域就是一个整页工作台：左边阶段轨道、中间填字段、右边实时拼装提示词，底部一键发送到指定会话。同一套提示词还注册成 9 个 agent skill，模型可以在会话里自动调用（其中 `lao-ou-topic-expert` 是把原「老欧自媒体选题专家」插件融合进来的一环，独立插件已可卸载）。
 
@@ -91,7 +93,7 @@
 4. 后面阶段如果必填字段没填，就直接发该阶段的完整模板（让模型自己按上文推断），不会因为缺字段卡住；
 5. 状态行会显示 `已排队 2/6 个环节…`，最终 `已按顺序发出 6/6 个环节，「DSH-Writing desk」里会连续跑完`。
 
-顺序是 **选题 → 结构 → 润色 → 传播优化 → 自检 → 标题 → 封面**：自检先跑，标题和封面摘要基于自检后的定稿来写，最后一步出封面。
+顺序是 **找选题 → 定角度 → 搭结构 → 磨文字 → 促转发 → 过自检 → 起标题 → 做封面**：自检先跑，标题和封面摘要基于自检后的定稿来写，最后一步出封面。
 
 ## ⓪ 找选题（从海量信息里筛题材）
 
@@ -172,15 +174,15 @@
 
 | Skill | 阶段 | 触发场景 |
 |---|---|---|
-| `lao-ou-article-pipeline` | 🎯 六阶段一条龙（编排） | "帮我写一篇老欧风格的文章" |
+| `lao-ou-article-pipeline` | 🎯 跑全程（编排） | "帮我写一篇老欧风格的文章" |
 | `lao-ou-topic-expert` | ⓪ 选题专家 | "这个链接能写什么" / "选题：AI 编程" / "今天写什么" |
 | `lao-ou-topic-angles` | ① 定角度（原选题角度） | "帮我给这个话题找个角度" |
-| `lao-ou-writing-structure` | ② 写作结构 | "按老欧的风格写一篇公众号文章" |
-| `lao-ou-article-polish` | ③ 文章润色 | "帮我润色这篇稿子，去去 AI 味" |
-| `lao-ou-spread-optimization` | ④ 传播优化改造 | "让这篇文章更容易被转发" |
-| `lao-ou-article-self-check` | ⑤ 文章自检 | "按老欧的标准自检这篇文章" |
-| `lao-ou-title-and-cover` | ⑥ 标题与封面摘要 | "出 12 组标题和封面摘要" |
-| `lao-ou-cover-design` | ⑦ 封面生成 | "按黑红剪影风格给这篇文章做张封面" |
+| `lao-ou-writing-structure` | ② 搭结构（SUCCESs 版） | "按老欧的风格写一篇公众号文章" |
+| `lao-ou-article-polish` | ③ 磨文字（去 AI 味） | "帮我润色这篇稿子，去去 AI 味" |
+| `lao-ou-spread-optimization` | ④ 促转发（结构改造） | "让这篇文章更容易被转发" |
+| `lao-ou-article-self-check` | ⑤ 过自检（L1–L4） | "按老欧的标准自检这篇文章" |
+| `lao-ou-title-and-cover` | ⑥ 起标题（12 组） | "出 12 组标题和封面摘要" |
+| `lao-ou-cover-design` | ⑦ 做封面 | "按黑红剪影风格给这篇文章做张封面" |
 
 这 9 个 skill 由宿主端 `lib/index.js` 通过 `ctx.skills.register()` 注册（内存注册，不往工作区或 `$DSH_HOME` 写文件），随插件卸载自动消失。
 
@@ -316,7 +318,7 @@ lao-ou-writing-workbench/
 | `sidebar.panellist` | 左侧栏图标；同一 `id` 就是它要打开的 `main` 键 |
 | `main`（`key: writing-workbench`） | 中央整页工作台；会话列表来自 `useSessions`，用 `retainedBy.mainView > 0` 找出"你正在看的会话" |
 | `conversation.input.right` | 输入框右侧快捷入口，点击 = `layout.selectPanel('writing-workbench')` |
-| `lib/index.js` | 宿主端：`ctx.skills.register()` 注册 7 个 skill |
+| `lib/index.js` | 宿主端：`ctx.skills.register()` 注册 9 个 skill |
 | `ctx.locale` | 界面文案注册到 `dsh-writing-workbench` 命名空间（zh + en，41 条 × 2） |
 
 样式随组件挂载为 `<style>` 元素，卸载即移除；颜色只用已注册的 `--dsw-alias-*` 主题变量（bg-base / bg-layer-1 / bg-layer-2 / border-l1 / border-l2 / brand-primary / label-primary / label-secondary / label-on-color / state-success-primary / state-error-primary / state-warn-primary / state-idle-primary），其余层次用 `color-mix()` 和局部 `--lou-*` 变量推导，自动跟随浅色/深色主题；字体用宋体（Songti SC / STSong / Noto Serif SC）表达写作气质。
@@ -331,6 +333,8 @@ plugin_manager remove_bundle target=@lao-ou/dsh-writing-workbench
 
 | 版本 | 主要变化 |
 |---|---|
+| 0.13.2 | 九个环节名统一为三字：找选题 / 定角度 / 搭结构 / 磨文字 / 促转发 / 过自检 / 起标题 / 做封面 / 跑全程 |
+| 0.13.1 | 区分两个选题环节：⓪ 找选题（海量信息筛题材）与 ① 定角度（给已选题材找切口） |
 | 0.13.0 | 融合「老欧自媒体选题专家」：新增 ⓪ 选题专家环节与 `lao-ou-topic-expert` skill，独立插件可卸载 |
 | 0.12.7 | 画幅新增「公众号封面图 16:9」（2048×1152），平台说明与提示词同步 |
 | 0.12.6 | 封面标题改为非必填；空标题时提示词改为纯画面表达 |

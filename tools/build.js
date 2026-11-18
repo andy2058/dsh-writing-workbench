@@ -29,35 +29,35 @@ const STAGES = [
     id: 'structure',
     file: '02-写作结构.txt',
     skill: 'lao-ou-writing-structure',
-    description: '老欧拾光记·写作结构（SUCCESs 六原则）：把主题与素材写成一篇符合老欧风格的公众号长文。',
+    description: '老欧拾光记·搭结构（原写作结构，SUCCESs 六原则）：把主题与素材写成一篇符合老欧风格的公众号长文。',
     whenToUse: '要按老欧的风格写一篇完整公众号文章，或需要文章结构骨架时使用。',
   },
   {
     id: 'polish',
     file: '03-文章润色.txt',
     skill: 'lao-ou-article-polish',
-    description: '老欧拾光记·文章润色：按老欧的口语风格润色初稿，去掉 AI 味、书面腔和翻译腔。',
+    description: '老欧拾光记·磨文字（原文章润色）：按老欧的口语风格润色初稿，去掉 AI 味、书面腔和翻译腔。',
     whenToUse: '已有初稿或 AI 生成的草稿，需要润色成"活人写的"中文时使用。',
   },
   {
     id: 'spread',
     file: '04-传播优化改造.txt',
     skill: 'lao-ou-spread-optimization',
-    description: '老欧拾光记·传播优化改造：按《引爆点》三法则 + SUCCESs 六原则，对成稿做最小结构改造以提升转发。',
+    description: '老欧拾光记·促转发（原传播优化改造）：按《引爆点》三法则 + SUCCESs 六原则，对成稿做最小结构改造以提升转发。',
     whenToUse: '文章写完了但传播力不够，想提升转发和"被记住"的程度时使用。',
   },
   {
     id: 'title',
     file: '05-标题与封面摘要.txt',
     skill: 'lao-ou-title-and-cover',
-    description: '老欧拾光记·标题与封面摘要：按公众号传播规律生成 12 组标题与封面摘要。',
+    description: '老欧拾光记·起标题（原标题与封面摘要）：按公众号传播规律生成 12 组标题与封面摘要。',
     whenToUse: '文章定稿后要出标题、封面摘要或摘要文案时使用。',
   },
   {
     id: 'check',
     file: '06-文章自检.txt',
     skill: 'lao-ou-article-self-check',
-    description: '老欧拾光记·文章自检（L1–L4）：按硬规则 → 风格 → 深度 → 活人感四层自检并给出修改建议。',
+    description: '老欧拾光记·过自检（原文章自检，L1–L4）：按硬规则 → 风格 → 深度 → 活人感四层自检并给出修改建议。',
     whenToUse: '成稿发布前想按老欧的标准做最后自检时使用。',
   },
 ]
@@ -71,14 +71,14 @@ const TOPIC_EXPERT = {
 
 const COVER = {
   skill: 'lao-ou-cover-design',
-  description: '老欧拾光记·封面生成：按 cover-master 的封面提示词蓝图，把用户选定的 17 种风格原子编译成一条完整图片生成提示词，并调用豆包（火山方舟 seedream）出图。',
+  description: '老欧拾光记·做封面（原封面生成）：按 cover-master 的封面提示词蓝图，把用户选定的 17 种风格原子编译成一条完整图片生成提示词，并调用豆包（火山方舟 seedream）出图。',
   whenToUse: '文章定稿后要做公众号/小红书封面，需要按风格生成封面提示词或直接出图时使用。',
 }
 
 const PIPELINE = {
   file: '00-pipeline.md',
   skill: 'lao-ou-article-pipeline',
-  description: '老欧拾光记·六阶段一条龙编排：自动按 找选题 → 定角度 → 结构 → 润色 → 传播优化 → 自检 → 标题封面 跑完全流程，一次交付成稿。',
+  description: '老欧拾光记·六阶段一条龙编排：自动按 找选题 → 定角度 → 搭结构 → 磨文字 → 促转发 → 过自检 → 起标题 → 做封面 跑完全流程，一次交付成稿。',
   whenToUse: '用户说"帮我写一篇老欧风格的文章"或直接给出话题/素材，希望一次拿到完整成稿时使用。',
 }
 

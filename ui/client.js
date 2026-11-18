@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.13.1'
+    const VERSION = 'v0.13.2'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -474,7 +474,7 @@ window.__ModuleLoader__.load({
       {
         id: 'structure',
         num: '②',
-        short: '结构',
+        short: '搭结构',
         name: '写作结构（SUCCESs 版）',
         blurb: '把主题与素材写成一篇符合老欧风格的公众号长文（3000 字量级）。',
         fields: [
@@ -508,7 +508,7 @@ window.__ModuleLoader__.load({
       {
         id: 'polish',
         num: '③',
-        short: '润色',
+        short: '磨文字',
         name: '文章润色',
         blurb: '去 AI 味、书面腔和翻译腔，改成老欧的口语节奏。',
         fields: [
@@ -529,7 +529,7 @@ window.__ModuleLoader__.load({
       {
         id: 'spread',
         num: '④',
-        short: '传播',
+        short: '促转发',
         name: '传播优化改造',
         blurb: '按《引爆点》三法则 + SUCCESs 六原则做最小结构改造，提升转发。',
         fields: [
@@ -550,7 +550,7 @@ window.__ModuleLoader__.load({
       {
         id: 'check',
         num: '⑤',
-        short: '自检',
+        short: '过自检',
         name: '文章自检（L1–L4）',
         blurb: '硬规则 → 风格 → 深度 → 活人感，四层逐条自查并给修改建议。',
         fields: [
@@ -571,7 +571,7 @@ window.__ModuleLoader__.load({
       {
         id: 'title',
         num: '⑥',
-        short: '标题',
+        short: '起标题',
         name: '标题与封面摘要',
         blurb: '出 12 组标题 + 封面摘要，按公众号传播规律筛出最优几组。',
         fields: [
@@ -602,7 +602,7 @@ window.__ModuleLoader__.load({
       {
         id: 'cover',
         num: '⑦',
-        short: '封面',
+        short: '做封面',
         name: '封面生成（豆包 seedream 以文生图）',
         blurb: '按你选的视觉风格，把内容编译成封面提示词，直接调火山方舟出图并存进本次的稿件目录。',
         fields: [
@@ -648,7 +648,7 @@ window.__ModuleLoader__.load({
     const PIPELINE_STAGE = {
       id: 'pipeline',
       num: '🎯',
-      short: '全流程',
+      short: '跑全程',
       name: '六阶段一条龙',
       blurb: '不用一步步来：给出主题和素材，模型按六阶段跑完并一次性交稿。',
       fields: [
@@ -2419,7 +2419,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 20, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 21, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )
