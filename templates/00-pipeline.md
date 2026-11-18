@@ -8,7 +8,7 @@
 
 | 阶段 | 对应 skill | 产出 |
 |---|---|---|
-| ① 选题角度 | `lao-ou-topic-angles` | 选定的角度 + 一句话核心主张 + 3 条黑天鹅拷问结论 |
+| ① 定角度 | `lao-ou-topic-angles` | 选定的角度 + 一句话核心主张 + 3 条黑天鹅拷问结论 |
 | ② 写作结构 | `lao-ou-writing-structure` | 完整长文（SUCCESs 六原则） |
 | ③ 文章润色 | `lao-ou-article-polish` | 去 AI 味、口语化的润色稿 |
 | ④ 传播优化改造 | `lao-ou-spread-optimization` | 结构改造后的更易转发版本 |

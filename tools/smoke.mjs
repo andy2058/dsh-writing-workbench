@@ -72,7 +72,7 @@ mod.apply(ctx);
 /* 1. 三个注册点：左侧栏图标 + 中央页面 + 输入框入口 */
 const byOwner = new Map(registrations.map((r) => [r.owner, r.result.registered]));
 const expected = [
-  ['sidebar.panellist', 'writing-workbench', 19],
+  ['sidebar.panellist', 'writing-workbench', 20],
   ['main', 'writing-workbench', undefined],
   ['conversation.input.right', 'lou-writing-workbench', 20],
 ];
@@ -189,7 +189,7 @@ if (!source.includes("lcSet") && !source.includes("lsSet(LS + 'target', sendTarg
   fail('new-flow mode must remember the session it created');
 }
 
-/* 6b. 环节顺序：选题专家 → 选题 → 结构 → 润色 → 传播优化 → 自检 → 标题 → 封面 */
+/* 6b. 环节顺序：找选题 → 定角度 → 结构 → 润色 → 传播优化 → 自检 → 标题 → 封面 */
 const stageOrder = ['material', 'topic', 'structure', 'polish', 'spread', 'check', 'title', 'cover'].map((id) =>
   source.indexOf("id: '" + id + "'"),
 )

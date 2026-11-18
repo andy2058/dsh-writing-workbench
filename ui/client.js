@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.13.0'
+    const VERSION = 'v0.13.1'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -405,9 +405,9 @@ window.__ModuleLoader__.load({
       {
         id: 'material',
         num: '⓪',
-        short: '选题',
-        name: '选题专家（先定写什么）',
-        blurb: '从链接、文件、素材或关键词里读出可写的选题，给角度、弹药方向与评分。',
+        short: '找选题',
+        name: '找选题（从海量信息里筛出值得写的题材）',
+        blurb: '从链接、文件、素材或关键词里筛出 3-5 个值得写的题材：主题、角度、读者、弹药、评分。',
         fields: [
           {
             key: 'mode',
@@ -449,9 +449,9 @@ window.__ModuleLoader__.load({
       {
         id: 'topic',
         num: '①',
-        short: '选题',
-        name: '文章选题角度（黑天鹅版）',
-        blurb: '诊断平庸角度，给出侧门 / 反直觉 / 沉默证据三个角度，再逐一做黑天鹅拷问。',
+        short: '定角度',
+        name: '定角度（给已选的题材找切口 · 黑天鹅版）',
+        blurb: '题材已定，这里只解决「从哪儿切」：诊断平庸角度，给出侧门 / 反直觉 / 沉默证据三个角度，再逐一做黑天鹅拷问。',
         fields: [
           {
             key: 'topic',
@@ -2419,7 +2419,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 19, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 20, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )
