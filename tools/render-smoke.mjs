@@ -97,8 +97,22 @@ let fileUploadAvailable = true;
 let uploadRejects = false;
 let uploadCalls = 0;
 let lastUploadRequest = null;
+let lastCoverRequest = null;
 async function fetchStub(url, init) {
-  lastUploadRequest = { url: String(url), init };
+  const href = String(url);
+  if (href.indexOf('/api/x-writing-workbench/cover') !== -1) {
+    lastCoverRequest = { url: href, init };
+    const payload = {
+      ok: true,
+      url: 'https://ark.example.com/cover.png',
+      path: '/Users/jim2056/DSH-Writing desk/稿件-2026-11-17-2230-abcdef/cover-20261117-223000.png',
+      model: 'doubao-seedream-3-0-t2i-250415',
+      size: '1536x2048',
+      ms: 1200,
+    };
+    return { status: 200, text: async () => JSON.stringify(payload), json: async () => payload };
+  }
+  lastUploadRequest = { url: href, init };
   return {
     status: 200,
     text: async () => JSON.stringify({ ok: true, value: { receiptId: 'rcpt-http', file: { attachmentId: 'att-http', name: '素材.md', bytes: 8 } } }),
@@ -596,8 +610,8 @@ if (!chainButton.props.title || !chainButton.props.title.includes('结构')) {
 }
 chainButton.props.onClick();
 await new Promise((resolve) => setTimeout(resolve, 120));
-if (prompts.length !== 5) {
-  console.error('RENDER_FAIL: expected 5 chained prompts (结构→润色→传播→自检→标题), got ' + prompts.length);
+if (prompts.length !== 6) {
+  console.error('RENDER_FAIL: expected 6 chained prompts (结构→润色→传播→自检→标题→封面), got ' + prompts.length);
   process.exit(1);
 }
 for (let index = 0; index < prompts.length; index += 1) {
@@ -607,7 +621,7 @@ for (let index = 0; index < prompts.length; index += 1) {
     console.error('RENDER_FAIL: chained prompt ' + (index + 1) + ' went to ' + entry.sessionId + '/' + entry.mode);
     process.exit(1);
   }
-  if (!text.includes('【连续执行 ' + (index + 1) + '/5】')) {
+  if (!text.includes('【连续执行 ' + (index + 1) + '/6】')) {
     console.error('RENDER_FAIL: chained prompt ' + (index + 1) + ' lost its chain marker, tail: ' + text.slice(-200));
     process.exit(1);
   }
@@ -616,16 +630,102 @@ if (!prompts[0].content[0].text.includes('中年人转行的真实代价')) {
   console.error('RENDER_FAIL: the first chained prompt lost the filled field');
   process.exit(1);
 }
-if (!prompts[4].content[0].text.includes('标题') && !prompts[4].content[0].text.includes('封面')) {
-  console.error('RENDER_FAIL: the last chained prompt is not the title stage');
+if (!prompts[5].content[0].text.includes('封面')) {
+  console.error('RENDER_FAIL: the last chained prompt is not the cover stage');
   process.exit(1);
 }
 const afterChain = rerender(PAGE, pageProps);
-if (!afterChain.text.includes('已按顺序发出 5/5')) {
+if (!afterChain.text.includes('已按顺序发出 6/6')) {
   console.error('RENDER_FAIL: the chain status line is missing, status text:', afterChain.text.slice(-200));
   process.exit(1);
 }
+/* 封面环节：17 种风格可选，点「生成封面」走宿主代理 */
+window.localStorage.setItem('dsh.writing-workbench.stage', 'cover');
+window.localStorage.setItem('dsh.writing-workbench.ark', 'ark-test-key');
+window.localStorage.setItem(
+  'dsh.writing-workbench.values:cover',
+  JSON.stringify({
+    title: '中年转行，先算清这三笔账',
+    shortTitle: '三笔账',
+    summary: '转行不是勇气问题，是现金流问题。',
+    style: 'black-red-silhouette',
+    ratio: '3:4',
+  }),
+);
+const coverView = render(PAGE, pageProps);
+const coverSelects = findAll(coverView.tree, (node) => node.tag === 'select');
+const styleSelect = coverSelects.find((node) => findAll(node, (item) => item.tag === 'option').length === 17);
+if (!styleSelect) {
+  const sizes = coverSelects.map((node) => findAll(node, (item) => item.tag === 'option').length);
+  console.error('RENDER_FAIL: no select with 17 cover styles, option counts: ' + sizes.join(','));
+  process.exit(1);
+}
+const ratioSelect = coverSelects.find((node) => node !== styleSelect && findAll(node, (item) => item.tag === 'option').length === 3);
+if (!ratioSelect) {
+  console.error('RENDER_FAIL: the ratio select is missing');
+  process.exit(1);
+}
+const previewArea = findNode(
+  coverView.tree,
+  (node) => node.tag === 'textarea' && String(node.props.className || '').indexOf('lou-wb-preview') !== -1,
+);
+const coverPrompt = previewArea ? String(previewArea.props.value || '') : '';
+if (!coverPrompt.includes('cover prompt') || !coverPrompt.includes('黑红剪影')) {
+  console.error('RENDER_FAIL: the cover preview is not the compiled cover prompt, head: ' + coverPrompt.slice(0, 160));
+  process.exit(1);
+}
+if (!coverPrompt.includes('3:4') || !coverPrompt.includes('1536x2048')) {
+  console.error('RENDER_FAIL: cover preview lost the ratio / size');
+  process.exit(1);
+}
+if (!coverPrompt.includes('「“三笔账”」')) {
+  console.error('RENDER_FAIL: cover preview does not quote the rendered title');
+  process.exit(1);
+}
+const coverButton = findNode(
+  coverView.tree,
+  (node) => node.tag === 'button' && flatten(node).join('').includes(dicts.zh['action.generateCover']),
+);
+if (!coverButton) {
+  console.error('RENDER_FAIL: the generate-cover button is missing');
+  process.exit(1);
+}
+coverButton.props.onClick();
+await new Promise((resolve) => setTimeout(resolve, 60));
+if (!lastCoverRequest) {
+  console.error('RENDER_FAIL: clicking generate cover did not call the host proxy');
+  process.exit(1);
+}
+const coverBody = JSON.parse(lastCoverRequest.init.body);
+if (lastCoverRequest.init.headers['x-ark-key'] !== 'ark-test-key') {
+  console.error('RENDER_FAIL: the Ark key header is missing: ' + JSON.stringify(lastCoverRequest.init.headers));
+  process.exit(1);
+}
+if (coverBody.size !== '1536x2048' || !String(coverBody.prompt).includes('封面')) {
+  console.error('RENDER_FAIL: unexpected cover request body: ' + lastCoverRequest.init.body.slice(0, 200));
+  process.exit(1);
+}
+const coverAfter = rerender(PAGE, pageProps);
+if (!coverAfter.text.includes('封面已生成')) {
+  console.error('RENDER_FAIL: cover status line missing, tail: ' + coverAfter.text.slice(-160));
+  process.exit(1);
+}
 window.localStorage.setItem('dsh.writing-workbench.stage', 'pipeline');
+
+function findAll(node, predicate) {
+  const found = [];
+  const walk = (item) => {
+    if (!item || typeof item !== 'object') return;
+    if (Array.isArray(item)) {
+      item.forEach(walk);
+      return;
+    }
+    if (predicate(item)) found.push(item);
+    walk(item.children || []);
+  };
+  walk(node);
+  return found;
+}
 
 function findNode(node, predicate) {
   if (!node || typeof node !== 'object') return undefined;

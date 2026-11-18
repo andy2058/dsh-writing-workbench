@@ -62,6 +62,12 @@ const STAGES = [
   },
 ]
 
+const COVER = {
+  skill: 'lao-ou-cover-design',
+  description: '老欧拾光记·封面生成：按 cover-master 的封面提示词蓝图，把用户选定的 17 种风格原子编译成一条完整图片生成提示词，并调用豆包（火山方舟 seedream）出图。',
+  whenToUse: '文章定稿后要做公众号/小红书封面，需要按风格生成封面提示词或直接出图时使用。',
+}
+
 const PIPELINE = {
   file: '00-pipeline.md',
   skill: 'lao-ou-article-pipeline',
@@ -78,11 +84,96 @@ const source = readFileSync(join(ROOT, 'ui', 'client.js'), 'utf8')
 const MARK = '/*__TEMPLATES__*/'
 const occurrences = source.split(MARK).length - 1
 if (occurrences !== 1) throw new Error(`ui/client.js 应恰好包含 1 个模板占位符 ${MARK}，实际 ${occurrences} 个`)
-const body = [...STAGES, { id: 'pipeline', file: PIPELINE.file }].map((stage) => {
+const body = [...STAGES, { id: 'pipeline', file: PIPELINE.file }, { id: 'cover', file: '07-封面生成.txt' }].map((stage) => {
   const text = readTemplate(stage.file)
   return `      ${JSON.stringify(stage.id)}: ${JSON.stringify(text)},`
 }).join('\n')
-const bundle = source.replace(MARK, () => `\n${body}`)
+const bundleWithTemplates = source.replace(MARK, () => `\n${body}`)
+
+/* ---------- 1b) 封面风格库（cover-master 素材，注入 ui/client.js） ---------- */
+const COVER_DIR = join(ROOT, 'templates', 'cover')
+const STYLE_MARK = '/*__COVER_STYLES__*/'
+
+function readStyle(id) {
+  const raw = readFileSync(join(COVER_DIR, 'styles', `${id}.md`), 'utf8').replace(/\r\n/g, '\n')
+  const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(raw)
+  if (!match) throw new Error(`风格文件缺 YAML frontmatter：${id}.md`)
+  const front = match[1]
+  const bodyText = match[2]
+  const readKey = (key) => {
+    const single = new RegExp(`^${key}:[ \\t]*(\\S.*)$`, 'm').exec(front)
+    if (single) return single[1].trim().replace(/^["']|["']$/g, '')
+    const block = new RegExp(`^${key}:[ \\t]*\\n((?:[ \\t]*- .*\\n?)+)`, 'm').exec(front)
+    if (block) {
+      return block[1]
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('- '))
+        .map((line) => line.slice(2).trim())
+    }
+    return ''
+  }
+  const sections = {}
+  let current = null
+  for (const line of bodyText.split('\n')) {
+    const heading = /^##\s+(.+)$/.exec(line)
+    if (heading) {
+      current = heading[1].trim()
+      sections[current] = []
+      continue
+    }
+    if (current) sections[current].push(line)
+  }
+  const sectionText = (name) => (sections[name] || []).join('\n').trim()
+  const sectionBullets = (name) =>
+    (sections[name] || [])
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('- '))
+      .map((line) => line.slice(2).trim())
+  return {
+    id: readKey('id') || id,
+    name: readKey('name') || id,
+    ratio: readKey('default_ratio') || '3:4',
+    anchors: readKey('style_anchors') || [],
+    adaptation: readKey('cover_shape_adaptation') || [],
+    preserve: readKey('must_preserve') || [],
+    avoid: readKey('avoid_when_applying_to_cover') || [],
+    core: sectionText('视觉风格原子'),
+    genes: sectionBullets('风格基因'),
+    layout: sectionBullets('图文关系'),
+    bans: sectionBullets('风格特有禁用项'),
+  }
+}
+
+const catalog = readFileSync(join(COVER_DIR, 'catalog.md'), 'utf8')
+const styleIds = [...catalog.matchAll(/^\|\s*[^|]+\|\s*`([a-z0-9-]+)`\s*\|/gm)].map((m) => m[1])
+if (styleIds.length === 0) throw new Error('templates/cover/catalog.md 里没有解析到任何风格 id')
+const coverStyles = styleIds.map(readStyle)
+const styleCount = bundleWithTemplates.split(STYLE_MARK).length - 1
+if (styleCount !== 1) throw new Error(`ui/client.js 应恰好包含 1 个封面占位符 ${STYLE_MARK}，实际 ${styleCount} 个`)
+const styleBody = coverStyles.map((style) => `      ${JSON.stringify(style)},`).join('\n')
+const bundle = bundleWithTemplates.replace(STYLE_MARK, () => `\n${styleBody}`)
+
+const coverSkillContent = [
+  readFileSync(join(COVER_DIR, 'SKILL.md'), 'utf8').replace(/\r\n/g, '\n').trim(),
+  '\n\n---\n\n## 内联风格库（17 个，离线可用）\n',
+  coverStyles
+    .map((style) =>
+      [
+        `### ${style.name}（\`${style.id}\`，默认比例 ${style.ratio}）`,
+        style.core ? style.core : '',
+        style.anchors.length ? `- 风格锚点：${style.anchors.join('；')}` : '',
+        style.adaptation.length ? `- 封面形态适配：${style.adaptation.join('；')}` : '',
+        style.preserve.length ? `- 必须保留：${style.preserve.join('；')}` : '',
+        style.avoid.length ? `- 避免：${style.avoid.join('；')}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    )
+    .join('\n\n'),
+  '\n\n---\n\n## 提示词蓝图\n',
+  readFileSync(join(COVER_DIR, 'blueprint.md'), 'utf8').replace(/\r\n/g, '\n').trim(),
+].join('\n')
 mkdirSync(join(ROOT, 'lib'), { recursive: true })
 writeFileSync(join(ROOT, 'lib', 'client.js'), bundle)
 
@@ -99,6 +190,14 @@ for (const stage of STAGES) {
   })
 }
 skills.push({
+  name: COVER.skill,
+  description: COVER.description,
+  whenToUse: COVER.whenToUse,
+  source: 'bundled',
+  provider: PROVIDER,
+  content: coverSkillContent,
+})
+skills.push({
   name: PIPELINE.skill,
   description: PIPELINE.description,
   whenToUse: PIPELINE.whenToUse,
@@ -114,3 +213,4 @@ writeFileSync(
 
 console.log(`lib/client.js         ${bundle.length} 字符`)
 console.log(`lib/skill-manifest.js ${skills.length} 个 skill：${skills.map((s) => s.name).join(', ')}`)
+console.log(`cover styles          ${coverStyles.length} 个：${coverStyles.map((s) => s.id).join(', ')}`)

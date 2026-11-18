@@ -8,7 +8,7 @@
 
 插件本身**不做任何模型请求**：发送 = 先把附件上传成 receipt，再调用目标会话的 `session.prompt([{type:'text', text}, {type:'file', receiptId}], 'queue' | 'steer')`，剩下的交给模型。
 
-仓库：<https://github.com/andy2058/dsh-writing-workbench> ｜ 当前版本 **0.11.2** ｜ License: MIT
+仓库：<https://github.com/andy2058/dsh-writing-workbench> ｜ 当前版本 **0.12.0** ｜ License: MIT
 
 ---
 
@@ -89,11 +89,24 @@
 2. 再把后面每个阶段各发一条，全部进**同一个会话**的队列；
 3. 每条消息前面都带 `【连续执行 n/N】本环节是「…」`，后面带「直接基于上文继续，不要停下来问我」和「▶ 下一步：…」；
 4. 后面阶段如果必填字段没填，就直接发该阶段的完整模板（让模型自己按上文推断），不会因为缺字段卡住；
-5. 状态行会显示 `已排队 2/5 个环节…`，最终 `已按顺序发出 5/5 个环节，「DSH-Writing desk」里会连续跑完`。
+5. 状态行会显示 `已排队 2/6 个环节…`，最终 `已按顺序发出 6/6 个环节，「DSH-Writing desk」里会连续跑完`。
 
-顺序是 **选题 → 结构 → 润色 → 传播优化 → 自检 → 标题**：自检先跑，标题和封面摘要基于自检后的定稿来写。
+顺序是 **选题 → 结构 → 润色 → 传播优化 → 自检 → 标题 → 封面**：自检先跑，标题和封面摘要基于自检后的定稿来写，最后一步出封面。
 
-## 7 个 agent skill
+## ⑦ 封面生成（豆包 seedream 以文生图）
+
+这一环节把「内容 → 封面」做成两步内完成，不需要额外一轮对话：
+
+1. 填标题、主视觉标题（A 层）、副标题（C 层）、内容摘要；摘要决定画面隐喻；
+2. 选 **17 种视觉风格之一**（来自 cover-master 风格库：黑白极简概念、语义转译极简、复古手撕拼贴、巨型透视中文标题、立体纸雕概念海报、黑红剪影、法式极简墨线海报……）；
+3. 选画幅：公众号头图 `2.35:1`（2048×872）/ 小红书 `3:4`（1536×2048）/ 横版 `5:2`（2048×819）；
+4. 预览区就是编译好的**最终图片提示词**（按 cover-master 蓝图：风格编译 → 构图 → 文字系统 → 质感光线 → 禁止项），可以手改；
+5. 第一次用先粘一次**火山方舟 API Key**（只存在这台电脑的浏览器 localStorage，随请求发给你本机宿主，不写配置文件、不进日志）；
+6. 点「生成封面」→ 宿主代理调用方舟 `images/generations`（默认 `doubao-seedream-3-0-t2i-250415`，可切 `doubao-seedream-4-0-250828`）→ 出图后自动存进本次会话的稿件目录，状态行显示落盘路径。
+
+技术要点：浏览器不直接访问方舟（避免 CORS），Key 走 `x-ark-key` 请求头；宿主路由 `/api/x-writing-workbench/cover` 注册在 `ctx.connection.fetch` 上，沿用 DSH 的登录态鉴权；落盘只允许写进 `~/DSH-Writing desk` 或 `稿件-*` 目录。
+
+## 8 个 agent skill
 
 | Skill | 阶段 | 触发场景 |
 |---|---|---|
@@ -104,8 +117,9 @@
 | `lao-ou-spread-optimization` | ④ 传播优化改造 | "让这篇文章更容易被转发" |
 | `lao-ou-article-self-check` | ⑤ 文章自检 | "按老欧的标准自检这篇文章" |
 | `lao-ou-title-and-cover` | ⑥ 标题与封面摘要 | "出 12 组标题和封面摘要" |
+| `lao-ou-cover-design` | ⑦ 封面生成 | "按黑红剪影风格给这篇文章做张封面" |
 
-这 7 个 skill 由宿主端 `lib/index.js` 通过 `ctx.skills.register()` 注册（内存注册，不往工作区或 `$DSH_HOME` 写文件），随插件卸载自动消失。
+这 8 个 skill 由宿主端 `lib/index.js` 通过 `ctx.skills.register()` 注册（内存注册，不往工作区或 `$DSH_HOME` 写文件），随插件卸载自动消失。
 
 ---
 
@@ -137,8 +151,8 @@ plugin_manager install_bundle target=git+https://github.com/andy2058/dsh-writing
 ### ③ 用打好的安装包（离线/内网）
 
 ```bash
-# 从仓库下载 dist/lao-ou-dsh-writing-workbench-0.11.2.tgz，然后
-plugin_manager install_bundle target=/absolute/path/to/lao-ou-dsh-writing-workbench-0.11.2.tgz
+# 从仓库下载 dist/lao-ou-dsh-writing-workbench-0.12.0.tgz，然后
+plugin_manager install_bundle target=/absolute/path/to/lao-ou-dsh-writing-workbench-0.12.0.tgz
 ```
 
 ### ④ 本地开发目录（改代码后只需刷新页面）
@@ -147,7 +161,7 @@ plugin_manager install_bundle target=/absolute/path/to/lao-ou-dsh-writing-workbe
 plugin_manager install_bundle target=/absolute/path/to/lao-ou-writing-workbench
 ```
 
-装完刷新网页端：左侧栏多一个「**老欧写作工作台**」图标（排序 8，在「自媒体工作台」和「日程」之间），点开就是整页工作台，标题右侧显示版本号（应看到 `v0.11.2`）。
+装完刷新网页端：左侧栏多一个「**老欧写作工作台**」图标（排序 9，在「日程」之前），点开就是整页工作台，标题右侧显示版本号（应看到 `v0.12.0`）。
 
 `package.json` 的 `files` 已包含 `lib/`、`templates/`、`ui/`、`tools/`，所以从 GitHub 或 tgz 装下来也还能用 `node tools/build.js` 重新构建。
 
@@ -239,6 +253,7 @@ plugin_manager remove_bundle target=@lao-ou/dsh-writing-workbench
 
 | 版本 | 主要变化 |
 |---|---|
+| 0.12.0 | 新增第 7 环节「封面生成」：17 种 cover-master 风格 + 蓝图编译提示词 + 火山方舟 seedream 出图并落盘；新增 `lao-ou-cover-design` skill 与宿主生图代理路由 |
 | 0.11.2 | 发布到 GitHub，提供 tgz 安装包；六格刻度与阶段图标配色统一 |
 | 0.11.1 | 刻度和时间线只保留「当前阶段」一个强调色，完成状态改用统一 ✓ 标记 |
 | 0.11.0 | 界面重构：吸顶工具栏、宋体标题、「稿」字印、竖排时间线、稿纸预览 |

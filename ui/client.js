@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.11.2'
+    const VERSION = 'v0.12.0'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -35,6 +35,125 @@ window.__ModuleLoader__.load({
     /* ---------- 提示词模板（tools/build.js 注入，请勿手改） ---------- */
     const TEMPLATES = {
       /*__TEMPLATES__*/
+    }
+
+    /* ---------- 封面风格库（tools/build.js 从 templates/cover/ 注入，请勿手改） ---------- */
+    const COVER_STYLES = [
+      /*__COVER_STYLES__*/
+    ]
+
+    /* ---------- 封面：比例、模型、提示词编译 ---------- */
+    const COVER_RATIOS = [
+      { value: '2.35:1', size: '2048x872', label: '公众号头图 2.35:1' },
+      { value: '3:4', size: '1536x2048', label: '小红书 3:4' },
+      { value: '5:2', size: '2048x819', label: '横版 5:2' },
+    ]
+    const COVER_MODELS = [
+      { value: 'doubao-seedream-3-0-t2i-250415', label: 'seedream 3.0 · 快' },
+      { value: 'doubao-seedream-4-0-250828', label: 'seedream 4.0 · 细' },
+    ]
+
+    function coverStyleById(id) {
+      for (const style of COVER_STYLES) {
+        if (style.id === id) return style
+      }
+      return COVER_STYLES[0] || { id: 'minimal-visual-metaphor', name: '极简视觉隐喻风', anchors: [], adaptation: [], preserve: [], avoid: [] }
+    }
+
+    function coverSizeOf(ratio) {
+      for (const item of COVER_RATIOS) {
+        if (item.value === ratio) return item.size
+      }
+      return COVER_RATIOS[0].size
+    }
+
+    function coverPlatformOf(ratio) {
+      if (ratio === '3:4') return '小红书'
+      if (ratio === '5:2') return 'X / 横版社媒'
+      return '公众号'
+    }
+
+    /* 按 cover-master 的「封面提示词蓝图」把风格原子编译进封面形态：
+       一条完整、独立、可直接交给图片模型的提示词，不是风格说明书的拼接。 */
+    function buildCoverPrompt(values) {
+      const style = coverStyleById(values.style)
+      const ratio = values.ratio || '2.35:1'
+      const size = coverSizeOf(ratio)
+      const platform = coverPlatformOf(ratio)
+      const title = String(values.title || '').trim()
+      const shortTitle = String(values.shortTitle || '').trim() || title
+      const subtitle = String(values.subtitle || '').trim()
+      const summary = String(values.summary || '').trim()
+      const visual = String(values.visual || '').trim()
+      const mood = String(values.mood || '').trim()
+      const banned = String(values.banned || '').trim()
+
+      const list = (items) => items.map((item, index) => `  ${index + 1}. ${item}`).join('\n')
+      const lines = [
+        `# ${style.name} cover prompt`,
+        '你是一位顶级封面艺术总监、编辑视觉设计师、字体设计师和图片生成提示词导演。',
+        `为${platform}生成一张封面图，画幅比例 ${ratio}，输出尺寸 ${size}。`,
+        `必须使用选定视觉风格：${style.name} / ${style.id}。`,
+        '该风格不是装饰滤镜。封面的每个关键决策都必须通过该风格的视觉语言实现。',
+        '',
+        '## 输入',
+        `- 标题 / 主题：${title || '（见摘要）'}`,
+        `- A 层 / 主视觉标题：${shortTitle || '（见标题）'}`,
+        subtitle ? `- C 层 / 副标题或小字：${subtitle}` : '- C 层 / 副标题或小字：无，小字只保留极少量编号或标签',
+        `- 平台：${platform}`,
+        `- 画幅比例：${ratio}`,
+        `- 输出尺寸：${size}`,
+        '- 输出模式：单张',
+        '- 语言：中文',
+        `- 短语境摘要：${summary || title || '（未提供）'}`,
+        `- 视觉主体：${visual || '由摘要推导一个具体、可画出来的实体隐喻'}`,
+        `- 情绪：${mood || '克制、准确、有锋刃'}`,
+        banned ? `- 禁用元素：${banned}` : '- 禁用元素：无',
+        '',
+        '## 内容理解',
+        '先理解源材料再构图，但不要在画面里输出分析。',
+        '只用上面给出的派生字段，不要粘贴文章正文进画面或小字系统。',
+        '封面必须传达：',
+        '1. 第一眼看清主题是什么。',
+        '2. 第二眼看懂核心张力、洞见或隐喻。',
+        '3. 为什么这张封面属于所选风格，而不是通用封面模板。',
+        '',
+        `## 风格编译（${style.name}）`,
+        style.core ? style.core : '',
+        style.anchors.length ? '风格锚点：\n' + list(style.anchors) : '',
+        style.adaptation.length ? '封面形态适配：\n' + list(style.adaptation) : '',
+        style.preserve.length ? '必须保留：\n' + list(style.preserve) : '',
+        style.avoid.length ? '避坑：\n' + list(style.avoid) : '',
+        '',
+        '## 构图',
+        `- 画幅 ${ratio} 的版面从零为这个比例设计，不要上下补白、不要居中横图加边。`,
+        '- 单一主视觉中心；主体明确、边界干净、层次 2-3 层。',
+        '- 留白是结构的一部分：主视觉之外至少保留 28% 的克制空域。',
+        '- 画面必须从版式结构内部生长出来，而不是"照片贴在排字上"。',
+        '',
+        '## 文字系统',
+        `- 画面中只出现这些文字，逐字照抄，中文用中文引号：主标题「“${shortTitle || title}”」${subtitle ? `，副标题「“${subtitle}”」` : ''}。`,
+        '- 中文用与风格匹配的字重与字形（黑体/宋体/几何窄体按风格要求），字要真排出来，不是乱码、不是伪文字、不是英文占位。',
+        '- 字与图的关系按风格定义处理：字可被图像穿过、切分、压在实体上，但每个字都必须可读。',
+        '- 不要出现任何额外文字：无水印、无 logo、无二维码、无页码、无英文标语。',
+        '',
+        '## 质感与光线',
+        '- 单一明确的光源方向，阴影短而干净。',
+        '- 材质真实：纸张颗粒、油墨、金属、纸层、剪影等按风格落地，不要塑料感。',
+        '- 色彩克制：全画面 1 个主色相 + 1 个语义强调色，按风格给定。',
+        '',
+        '## 明确禁止',
+        '- 不要 PPT 封面感、课程封面感、电商海报感。',
+        '- 不要通用信息图模板、图标阵列、箭头流程、发光科技底纹。',
+        '- 不要拼贴多张风格、不要风格混搭、不要加装饰性花边。',
+        '- 不要在画面边缘加白框、黑框、圆角卡片或手机 mockup。',
+        banned ? `- 额外禁止：${banned}` : '',
+        '',
+        '## 输出',
+        `- 画幅 ${ratio}，${size}，单张成品，满版构图，无水印无不必要留边。`,
+        '- 只输出这张封面图本身，不要输出说明文字或分析。',
+      ]
+      return lines.filter((line) => line !== '' || true).join('\n').replace(/\n{3,}/g, '\n\n').trim()
     }
 
     /* ---------- 运行时上下文 ---------- */
@@ -121,6 +240,15 @@ window.__ModuleLoader__.load({
         'status.copied': '提示词已复制到剪贴板',
         'status.copyFailed': '复制失败，请手动选择文本复制',
         'status.filled': '本阶段已填写',
+        'label.coverKey': '火山方舟 API Key（只存在这台电脑的浏览器里）',
+        'hint.coverKey': '在火山方舟控制台建一个 API Key 粘到这里；它只随本次请求发给你本机的 DSH 宿主，不写进配置文件，也不进日志。',
+        'action.generateCover': '生成封面',
+        'label.coverResult': '封面结果',
+        'status.coverBusy': '正在调用豆包 seedream 出图…',
+        'status.coverDone': '封面已生成',
+        'status.coverSaved': '封面已生成并保存到 {path}',
+        'status.coverFailed': '封面生成失败：{message}',
+        'status.coverNoKey': '先填火山方舟 API Key 才能出图',
         'preview.empty': '（提示词会在这里实时拼装）',
       },
       en: {
@@ -191,6 +319,15 @@ window.__ModuleLoader__.load({
         'status.copied': 'Prompt copied to the clipboard',
         'status.copyFailed': 'Copy failed; select the text manually',
         'status.filled': 'Filled in',
+        'label.coverKey': 'Volcano Ark API key (kept in this browser only)',
+        'hint.coverKey': 'Create an API key in the Volcano Ark console and paste it here; it travels only with this request to your local DSH host — never into config files or logs.',
+        'action.generateCover': 'Generate cover',
+        'label.coverResult': 'Cover result',
+        'status.coverBusy': 'Generating the cover with Doubao seedream…',
+        'status.coverDone': 'Cover generated',
+        'status.coverSaved': 'Cover generated and saved to {path}',
+        'status.coverFailed': 'Cover generation failed: {message}',
+        'status.coverNoKey': 'Fill in the Volcano Ark API key first',
         'preview.empty': '(the assembled prompt appears here)',
       },
     }
@@ -377,6 +514,50 @@ window.__ModuleLoader__.load({
             '文章风格基调：' + (v.tone || '') + '\n' +
             '希望读者完成的行动：' + (v.action || '')
           )
+        },
+      },
+      {
+        id: 'cover',
+        num: '⑦',
+        short: '封面',
+        name: '封面生成（豆包 seedream 以文生图）',
+        blurb: '按你选的视觉风格，把内容编译成封面提示词，直接调火山方舟出图并存进本次的稿件目录。',
+        fields: [
+          {
+            key: 'title',
+            label: '封面标题（整张图的主题）',
+            required: true,
+            placeholder: '例如：中年转行，先算清这三笔账',
+          },
+          { key: 'shortTitle', label: '主视觉标题（A 层，短一点更有力）', placeholder: '留空则用封面标题' },
+          { key: 'subtitle', label: '副标题 / 小字（C 层，可留空）', placeholder: '例如：一个 42 岁程序员的复盘' },
+          {
+            key: 'summary',
+            label: '内容摘要（决定画面隐喻）',
+            kind: 'textarea',
+            rows: 3,
+            placeholder: '两三句话说清文章最想传达的那一件事',
+          },
+          { key: 'visual', label: '画面主体 / 隐喻（可选）', placeholder: '例如：一张被反复涂改的简历' },
+          { key: 'mood', label: '情绪（可选）', placeholder: '例如：克制、冷静、带一点锋利' },
+          { key: 'banned', label: '不要出现（可选）', placeholder: '例如：不要人脸、不要红色' },
+          {
+            key: 'style',
+            label: '视觉风格（17 选 1）',
+            kind: 'select',
+            required: true,
+            options: COVER_STYLES.map((style) => ({ value: style.id, label: style.name })),
+          },
+          {
+            key: 'ratio',
+            label: '画幅比例',
+            kind: 'select',
+            required: true,
+            options: COVER_RATIOS.map((item) => ({ value: item.value, label: item.label })),
+          },
+        ],
+        compose(v) {
+          return buildCoverPrompt(v)
         },
       },
     ]
@@ -687,6 +868,7 @@ window.__ModuleLoader__.load({
     /* ---------- 附件上传 ---------- */
     const IMAGE_TYPE = /^image\/(png|jpeg|webp|gif)$/
     const UPLOAD_PATH = '/api/session/uploadFileBinary'
+    const COVER_PATH = '/api/x-writing-workbench/cover'
 
     function uploadEndpoint(sessionId, name, mediaType) {
       const query = new URLSearchParams({ sessionId })
@@ -1026,6 +1208,10 @@ window.__ModuleLoader__.load({
       const [attachments, setAttachments] = React.useState([])
       const [dragOver, setDragOver] = React.useState(false)
       const fileInputRef = React.useRef(null)
+      const [arkKey, setArkKey] = React.useState(() => lsGet(LS + 'ark') || '')
+      const [arkModel, setArkModel] = React.useState(() => lsGet(LS + 'arkModel') || COVER_MODELS[0].value)
+      const [coverBusy, setCoverBusy] = React.useState(false)
+      const [coverResult, setCoverResult] = React.useState(null)
 
       const dirty = React.useRef(false)
       const template = templateOverride != null ? templateOverride : TEMPLATES[stageId] || ''
@@ -1076,6 +1262,12 @@ window.__ModuleLoader__.load({
         setPreview(compose(stage, values, template))
       }, [stage, values, template])
 
+      React.useEffect(() => {
+        lsSet(LS + 'ark', arkKey)
+      }, [arkKey])
+      React.useEffect(() => {
+        lsSet(LS + 'arkModel', arkModel)
+      }, [arkModel])
       React.useEffect(() => {
         lsSet(LS + 'target', workflowMode ? WORKFLOW_TARGET : target)
       }, [target, workflowMode])
@@ -1308,6 +1500,55 @@ window.__ModuleLoader__.load({
           setStatus((prev) => ({ kind: prev.kind, text: prev.text + ' · ' + suffix }))
         }
         if (prepared.workflow) selectSession(prepared.sessionId)
+      }
+
+      async function makeCover() {
+        const prompt = String(preview || '').trim()
+        if (prompt === '') {
+          setStatus({ kind: 'error', text: t('status.empty') })
+          return
+        }
+        if (String(arkKey).trim() === '') {
+          setStatus({ kind: 'error', text: t('status.coverNoKey') })
+          return
+        }
+        setCoverBusy(true)
+        setStatus({ kind: 'pending', text: t('status.coverBusy') })
+        try {
+          const folder = lsGet(LS + 'folder:' + (target || '')) || ''
+          const response = await fetch(COVER_PATH, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'content-type': 'application/json', 'x-ark-key': String(arkKey).trim() },
+            body: JSON.stringify({
+              prompt,
+              model: arkModel,
+              size: coverSizeOf(values.ratio || COVER_RATIOS[0].value),
+              folder,
+            }),
+          })
+          const payload = await response.json().catch(() => undefined)
+          if (!payload || payload.ok !== true) {
+            const error = payload && payload.error ? payload.error : {}
+            throw new Error(error.message || 'HTTP ' + response.status)
+          }
+          setCoverResult({
+            url: payload.url,
+            path: payload.path || '',
+            size: payload.size || '',
+            ms: payload.ms || 0,
+          })
+          setStatus({
+            kind: 'ok',
+            text: payload.path
+              ? t('status.coverSaved', { path: payload.path })
+              : t('status.coverDone'),
+          })
+        } catch (error) {
+          setStatus({ kind: 'error', text: t('status.coverFailed', { message: errorMessage(error) }) })
+        } finally {
+          setCoverBusy(false)
+        }
       }
 
       async function send(sendMode) {
@@ -1615,6 +1856,29 @@ window.__ModuleLoader__.load({
 
       /* --- 字段区：短字段两栏，长字段独占一行 --- */
       const renderField = (field) => {
+        if (field.kind === 'select') {
+          const options = field.options || []
+          const current = values[field.key] || (options[0] ? options[0].value : '')
+          return h(
+            'label',
+            { className: 'lou-wb-field', key: field.key },
+            h(
+              'span',
+              { className: 'lou-wb-label' },
+              field.label,
+              field.required ? h('span', { className: 'lou-wb-req' }, '*') : null,
+            ),
+            h(
+              'select',
+              {
+                className: 'lou-wb-input lou-wb-select-field',
+                value: current,
+                onChange: (event) => setField(field.key, event.target.value),
+              },
+              options.map((option) => h('option', { key: option.value, value: option.value }, option.label)),
+            ),
+          )
+        }
         const value = values[field.key] || ''
         const common = {
           className: field.kind === 'textarea' ? 'lou-wb-textarea' : 'lou-wb-input',
@@ -1719,6 +1983,75 @@ window.__ModuleLoader__.load({
         )
         : null
 
+      const coverPanel = stage.id !== 'cover'
+        ? null
+        : h(
+          'div',
+          { className: 'lou-wb-cover', key: 'cover-panel' },
+          h(
+            'div',
+            { className: 'lou-wb-cover-head' },
+            h('span', { className: 'lou-wb-label' }, t('label.coverKey')),
+            h('span', { className: 'lou-wb-hint' }, t('hint.coverKey')),
+          ),
+          h(
+            'div',
+            { className: 'lou-wb-cover-row' },
+            h('input', {
+              className: 'lou-wb-input lou-wb-key',
+              type: 'password',
+              value: arkKey,
+              placeholder: 'ARK_API_KEY',
+              spellCheck: false,
+              autoComplete: 'off',
+              onChange: (event) => setArkKey(event.target.value),
+            }),
+            h(
+              'select',
+              {
+                className: 'lou-wb-input lou-wb-select-field lou-wb-model',
+                value: arkModel,
+                onChange: (event) => setArkModel(event.target.value),
+              },
+              COVER_MODELS.map((item) => h('option', { key: item.value, value: item.value }, item.label)),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'lou-wb-btn is-primary',
+                onClick: makeCover,
+                disabled: coverBusy,
+              },
+              coverBusy ? t('status.coverBusy') : t('action.generateCover'),
+            ),
+          ),
+          coverResult
+            ? h(
+              'div',
+              { className: 'lou-wb-cover-result' },
+              h('img', {
+                className: 'lou-wb-cover-img',
+                src: coverResult.url,
+                alt: t('label.coverResult'),
+              }),
+              h(
+                'div',
+                { className: 'lou-wb-cover-meta' },
+                h(
+                  'span',
+                  null,
+                  (coverResult.size || '') +
+                    ' · ' +
+                    Math.max(1, Math.round((coverResult.ms || 0) / 1000)) +
+                    's',
+                ),
+                coverResult.path ? h('code', { className: 'lou-wb-cover-path' }, coverResult.path) : null,
+              ),
+            )
+            : null,
+        )
+
       const fieldsPanel = h(
         'section',
         { className: 'lou-wb-panel' },
@@ -1742,6 +2075,7 @@ window.__ModuleLoader__.load({
           ),
         ),
         h('div', { className: 'lou-wb-form' }, fieldNodes),
+        coverPanel,
         h('div', { className: 'lou-wb-label', key: 'files-label' }, t('label.files')),
         attachDrop,
         attachList,
@@ -1921,7 +2255,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 8, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 9, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )
