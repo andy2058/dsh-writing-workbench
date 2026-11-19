@@ -5,6 +5,7 @@ import { apply } from '../lib/index.js'
 
 const skills = []
 const effects = []
+const routes = []
 let route = null
 
 const ctx = {
@@ -12,16 +13,14 @@ const ctx = {
     effects.push(id)
     return fn()
   },
-  get(key) {
-    if (key !== 'connection') return undefined
-    return {
-      fetch: {
-        register(candidate) {
-          route = candidate
-          return () => Promise.resolve()
-        },
+  connection: {
+    fetch: {
+      register(candidate) {
+        routes.push(candidate)
+        if (candidate.path === '/api/x-writing-workbench/cover') route = candidate
+        return () => Promise.resolve()
       },
-    }
+    },
   },
   skills: {
     register(skill) {
@@ -39,6 +38,13 @@ function fail(message) {
 }
 
 if (skills.length !== 9) fail('expected 9 skills, got ' + skills.length)
+const { inject } = await import('../lib/index.js')
+if (!Array.isArray(inject) || !inject.includes('connection')) {
+  fail('inject must include connection so the route registers after a DSH restart')
+}
+if (routes.length !== 2) fail('expected cover + health routes, got ' + routes.length)
+const healthRoute = routes.find((r) => r.path === '/api/x-writing-workbench/health')
+if (!healthRoute) fail('health route is missing')
 const coverSkill = skills.find((skill) => skill.name === 'lao-ou-cover-design')
 if (!coverSkill) fail('lao-ou-cover-design skill is missing')
 const topicSkill = skills.find((skill) => skill.name === 'lao-ou-topic-expert')
@@ -189,8 +195,8 @@ if (wrongMethod.status !== 405 || wrongMethod.body.error.code !== 'method-not-al
   fail('GET did not produce 405: ' + JSON.stringify(wrongMethod))
 }
 
-if (effects.length !== skills.length + 1) {
-  fail('expected one effect per skill plus the route, got ' + effects.length)
+if (effects.length !== skills.length + 2) {
+  fail('expected one effect per skill plus two routes, got ' + effects.length)
 }
 
 console.log('skills       :', skills.length, '→', skills.map((skill) => skill.name).join(', '))
