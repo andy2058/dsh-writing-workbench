@@ -62,6 +62,13 @@ const STAGES = [
   },
 ]
 
+const LAYOUT = {
+  file: 'wechat-layout.md',
+  skill: 'lao-ou-wechat-layout',
+  description: '老欧拾光记·排版：把定稿排成公众号 Markdown 方言（三段式标题、信息卡片、总结卡片、滑动容器），再由工作台渲染成行内样式 HTML，粘进公众号编辑器不丢样式。',
+  whenToUse: '文章定稿后要贴进公众号，需要标题层级、强调、卡片与统一配色时使用；也可单独问「这段怎么排好看」。',
+}
+
 const TOPIC_EXPERT = {
   file: 'topic-expert.md',
   skill: 'lao-ou-topic-expert',
@@ -78,7 +85,7 @@ const COVER = {
 const PIPELINE = {
   file: '00-pipeline.md',
   skill: 'lao-ou-article-pipeline',
-  description: '老欧拾光记·六阶段一条龙编排：自动按 找选题 → 定角度 → 搭结构 → 磨文字 → 促转发 → 过自检 → 起标题 → 做封面 跑完全流程，一次交付成稿。',
+  description: '老欧拾光记·六阶段一条龙编排：自动按 找选题 → 定角度 → 搭结构 → 磨文字 → 促转发 → 过自检 → 排版面 → 起标题 → 做封面 跑完全流程，一次交付成稿。',
   whenToUse: '用户说"帮我写一篇老欧风格的文章"或直接给出话题/素材，希望一次拿到完整成稿时使用。',
 }
 
@@ -91,7 +98,7 @@ const source = readFileSync(join(ROOT, 'ui', 'client.js'), 'utf8')
 const MARK = '/*__TEMPLATES__*/'
 const occurrences = source.split(MARK).length - 1
 if (occurrences !== 1) throw new Error(`ui/client.js 应恰好包含 1 个模板占位符 ${MARK}，实际 ${occurrences} 个`)
-const body = [{ id: 'material', file: '00-选题专家.txt' }, ...STAGES, { id: 'pipeline', file: PIPELINE.file }, { id: 'cover', file: '07-封面生成.txt' }].map((stage) => {
+const body = [{ id: 'material', file: '00-选题专家.txt' }, ...STAGES, { id: 'layout', file: '09-排版.txt' }, { id: 'pipeline', file: PIPELINE.file }, { id: 'cover', file: '07-封面生成.txt' }].map((stage) => {
   const text = readTemplate(stage.file)
   return `      ${JSON.stringify(stage.id)}: ${JSON.stringify(text)},`
 }).join('\n')
@@ -196,6 +203,14 @@ for (const stage of STAGES) {
     content: readTemplate(stage.file).trim(),
   })
 }
+skills.push({
+  name: LAYOUT.skill,
+  description: LAYOUT.description,
+  whenToUse: LAYOUT.whenToUse,
+  source: 'bundled',
+  provider: PROVIDER,
+  content: readTemplate(LAYOUT.file).trim(),
+})
 skills.push({
   name: TOPIC_EXPERT.skill,
   description: TOPIC_EXPERT.description,

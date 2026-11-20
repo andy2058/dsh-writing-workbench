@@ -640,8 +640,8 @@ if (!chainButton.props.title || !chainButton.props.title.includes('结构')) {
 }
 chainButton.props.onClick();
 await new Promise((resolve) => setTimeout(resolve, 120));
-if (prompts.length !== 6) {
-  console.error('RENDER_FAIL: expected 6 chained prompts (结构→润色→传播→自检→标题→封面), got ' + prompts.length);
+if (prompts.length !== 7) {
+  console.error('RENDER_FAIL: expected 7 chained prompts (结构→润色→传播→自检→排版→标题→封面), got ' + prompts.length);
   process.exit(1);
 }
 for (let index = 0; index < prompts.length; index += 1) {
@@ -651,7 +651,7 @@ for (let index = 0; index < prompts.length; index += 1) {
     console.error('RENDER_FAIL: chained prompt ' + (index + 1) + ' went to ' + entry.sessionId + '/' + entry.mode);
     process.exit(1);
   }
-  if (!text.includes('【连续执行 ' + (index + 1) + '/6】')) {
+  if (!text.includes('【连续执行 ' + (index + 1) + '/7】')) {
     console.error('RENDER_FAIL: chained prompt ' + (index + 1) + ' lost its chain marker, tail: ' + text.slice(-200));
     process.exit(1);
   }
@@ -665,7 +665,7 @@ if (!prompts[5].content[0].text.includes('封面')) {
   process.exit(1);
 }
 const afterChain = rerender(PAGE, pageProps);
-if (!afterChain.text.includes('已按顺序发出 6/6')) {
+if (!afterChain.text.includes('已按顺序发出 7/7')) {
   console.error('RENDER_FAIL: the chain status line is missing, status text:', afterChain.text.slice(-200));
   process.exit(1);
 }
@@ -845,6 +845,61 @@ for (const needle of ['lao-ou-topic-expert', '本次入口', 'https://mp.weixin.
     console.error('RENDER_FAIL: the topic-expert prompt is missing: ' + needle);
   }
 }
+/* ⑥ 排版面：Markdown 方言 → 行内样式 HTML */
+window.localStorage.setItem('dsh.writing-workbench.stage', 'layout');
+window.localStorage.setItem(
+  'dsh.writing-workbench.values:layout',
+  JSON.stringify({
+    scheme: 'jade-business',
+    emphasis: 'auto',
+    size: '15',
+    lineHeight: '1.9',
+    source: [
+      '# 01 | 中年转行的三笔账 | /// 一个 42 岁程序员的复盘',
+      '',
+      '## STEP01 | 先算清现金流',
+      '',
+      '转行的第一关不是勇气，是 **现金流**。',
+      '',
+      '> 先把最坏的情况写出来，再决定要不要走。',
+      '',
+      '- 房贷还剩 14 年',
+      '- 孩子明年上初中',
+      '',
+      '| 项目 | 状态 |',
+      '| :--- | ---: |',
+      '| 现金流 | 已算清 |',
+      '',
+      '```js',
+      'const plan = "先兼职半年"',
+      '```',
+      '',
+      '<InfoCard title="提示">',
+      '先别裸辞。',
+      '</InfoCard>',
+      '',
+      '<SummaryCard title="本文要点">',
+      '- 先算账',
+      '- 再谈勇气',
+      '</SummaryCard>',
+      '',
+      '![封面草图](https://example.com/cover.png)',
+    ].join('\n'),
+  }),
+);
+const layoutView = render(PAGE, pageProps);
+const htmlNode = findNode(layoutView.tree, (node) => node.props && node.props.dangerouslySetInnerHTML && node.props.dangerouslySetInnerHTML.__html);
+const layoutHtml = htmlNode ? String(htmlNode.props.dangerouslySetInnerHTML.__html) : '';
+for (const needle of ['<h1', 'STEP01', 'linear-gradient', '<table', '<pre', '提示', '本文要点', '<img']) {
+  if (!layoutHtml.includes(needle)) console.error('RENDER_FAIL: rendered layout HTML is missing: ' + needle);
+}
+if (/<style|class=|id="/.test(layoutHtml)) {
+  console.error('RENDER_FAIL: WeChat output must not contain style tags, class or id attributes');
+}
+if (!layoutHtml.includes('background:#FFFFFF')) console.error('RENDER_FAIL: jade-business paper colour is not applied');
+if (!layoutView.text.includes(dicts.zh['layout.copyHtml'])) console.error('RENDER_FAIL: the copy-HTML button is missing');
+window.localStorage.setItem('dsh.writing-workbench.stage', 'pipeline');
+
 console.log('components   :', [...capturedComponents.keys()].join(', '));
 console.log('send path    :', 'session ' + sent.sessionId + ' / mode ' + sent.mode + ' / ' + sent.content[0].text.length + ' chars → session.prompt');
 console.log('upload path  :', 'service receipt ' + serviceReceipt + ' + http fallback receipt rcpt-http → session.prompt');

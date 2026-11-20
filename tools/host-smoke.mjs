@@ -1,5 +1,5 @@
 /* 宿主端冒烟：不需要真实服务器，直接调 lib/index.js 的 apply()，检查
-   ① 9 个 skill 都注册了  ② 生图路由按 connection.fetch.register 的契约注册
+   ① 10 个 skill 都注册了  ② 生图路由按 connection.fetch.register 的契约注册
    ③ 路由的错误分支返回可读的 code（缺 key / 缺提示词 / 非法方法） */
 import { apply } from '../lib/index.js'
 
@@ -37,7 +37,7 @@ function fail(message) {
   process.exit(1)
 }
 
-if (skills.length !== 9) fail('expected 9 skills, got ' + skills.length)
+if (skills.length !== 10) fail('expected 10 skills, got ' + skills.length)
 const { inject } = await import('../lib/index.js')
 if (!Array.isArray(inject) || !inject.includes('connection')) {
   fail('inject must include connection so the route registers after a DSH restart')
@@ -47,6 +47,9 @@ const healthRoute = routes.find((r) => r.path === '/api/x-writing-workbench/heal
 if (!healthRoute) fail('health route is missing')
 const coverSkill = skills.find((skill) => skill.name === 'lao-ou-cover-design')
 if (!coverSkill) fail('lao-ou-cover-design skill is missing')
+const layoutSkill = skills.find((skill) => skill.name === 'lao-ou-wechat-layout')
+if (!layoutSkill) fail('lao-ou-wechat-layout skill is missing')
+if (!String(layoutSkill.content).includes('luobo-gzh-design')) fail('layout skill should credit luobo-gzh-design')
 const topicSkill = skills.find((skill) => skill.name === 'lao-ou-topic-expert')
 if (!topicSkill) fail('lao-ou-topic-expert skill is missing')
 if (!String(topicSkill.content).includes('老欧拾光记 · 选题专家')) fail('topic expert skill content is not the merged copy')

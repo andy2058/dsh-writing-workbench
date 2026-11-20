@@ -72,7 +72,7 @@ mod.apply(ctx);
 /* 1. 三个注册点：左侧栏图标 + 中央页面 + 输入框入口 */
 const byOwner = new Map(registrations.map((r) => [r.owner, r.result.registered]));
 const expected = [
-  ['sidebar.panellist', 'writing-workbench', 24],
+  ['sidebar.panellist', 'writing-workbench', 25],
   ['main', 'writing-workbench', undefined],
   ['conversation.input.right', 'lou-writing-workbench', 20],
 ];
@@ -102,7 +102,7 @@ const missing = [...used].filter((key) => !(key in (dicts.zh || {})));
 if (missing.length > 0) fail('t() keys without a dictionary entry: ' + missing.join(', '));
 
 /* 3. 模板：选题专家 + 六个阶段 + 一条龙 + 封面全部注入，且非空 */
-const stageKeys = ['material', 'pipeline', 'topic', 'structure', 'polish', 'spread', 'title', 'check', 'cover'];
+const stageKeys = ['material', 'pipeline', 'topic', 'structure', 'polish', 'spread', 'check', 'layout', 'title', 'cover'];
 const tplBlock = source.slice(source.indexOf('const TEMPLATES = {'), source.indexOf('/* ---------- 运行时上下文'));
 for (const key of stageKeys) {
   if (!new RegExp('\\n\\s+"' + key + '":').test(tplBlock)) fail('template not injected: ' + key);
@@ -198,19 +198,24 @@ for (const key of stageKeys) {
 }
 
 /* 6b. 环节顺序：找选题 → 定角度 → 结构 → 润色 → 传播优化 → 自检 → 标题 → 封面 */
-const stageOrder = ['material', 'topic', 'structure', 'polish', 'spread', 'check', 'title', 'cover'].map((id) =>
+const stageOrder = ['material', 'topic', 'structure', 'polish', 'spread', 'check', 'layout', 'title', 'cover'].map((id) =>
   source.indexOf("id: '" + id + "'"),
 )
 if (stageOrder.some((at) => at < 0)) fail('stage ids missing from the client source');
 for (let index = 1; index < stageOrder.length; index += 1) {
   if (stageOrder[index] < stageOrder[index - 1]) {
-    fail('stage order is wrong: expected material → topic → structure → polish → spread → check → title → cover');
+    fail('stage order is wrong: expected material → topic → structure → polish → spread → check → layout → title → cover');
   }
 }
 
 /* 6c. 选题专家阶段：入口下拉 + skill 引用 */
 for (const needle of ["const TOPIC_MODES", "TOPIC_MODE_HINT", "lao-ou-topic-expert", "id: 'material'"]) {
   if (!source.includes(needle)) fail('topic-expert stage is incomplete, missing: ' + needle)
+}
+
+/* 6e. 排版阶段：方案表 + 渲染器 + 面板 */
+for (const needle of ["const LAYOUT_SCHEMES", "function renderWechatMd", "id: 'layout'", "dangerouslySetInnerHTML", "'layout.copyHtml'"]) {
+  if (!source.includes(needle)) fail('layout stage is incomplete, missing: ' + needle)
 }
 
 /* 7. 页面显示的版本号与 package.json 一致 */

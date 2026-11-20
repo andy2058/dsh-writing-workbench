@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.13.5'
+    const VERSION = 'v0.14.0'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -232,6 +232,12 @@ window.__ModuleLoader__.load({
         'action.pipeline': '一键全流程',
         'action.viewSession': '去会话看结果',
         'hint.file': '素材在工作区文件里时填路径（模型会去读）；文件也可以直接拖进下面的上传区。',
+        'layout.title': '排版预览（就是粘进公众号的样子）',
+        'layout.sub': '把模型返回的排版稿粘到上面的「待排版正文」，这里实时渲染成行内样式 HTML。',
+        'layout.copyHtml': '复制 HTML',
+        'layout.copyMd': '复制 Markdown',
+        'layout.empty': '还没有可排版的正文：先把定稿粘进上面的「待排版正文」，或先让模型按排版提示词出一份排版稿。',
+        'layout.copied': '已复制{what}，粘到公众号编辑器即可',
         'label.files': '附件（可选，发送时一起上传给模型）',
         'hint.drop': '把文件拖到这里，或点「选择文件」；可以选多个，发送时统一上传。',
         'action.pickFile': '选择文件',
@@ -320,6 +326,12 @@ window.__ModuleLoader__.load({
         'action.pipeline': 'Run the whole pipeline',
         'action.viewSession': 'View result',
         'hint.file': 'Fill the path when the material lives in a workspace file (the model reads it); you can also drop files onto the upload area below.',
+        'layout.title': 'Layout preview (what WeChat will show)',
+        'layout.sub': 'Paste the model’s laid-out draft into “body to typeset” above; it renders here as inline-styled HTML.',
+        'layout.copyHtml': 'Copy HTML',
+        'layout.copyMd': 'Copy Markdown',
+        'layout.empty': 'Nothing to typeset yet: paste the final draft into “body to typeset” above, or ask the model for a laid-out draft first.',
+        'layout.copied': 'Copied {what} — paste it into the WeChat editor',
         'label.files': 'Attachments (optional, uploaded with the prompt)',
         'hint.drop': 'Drop files here, or click “Choose files”; several are fine, they upload together on send.',
         'action.pickFile': 'Choose files',
@@ -405,6 +417,320 @@ window.__ModuleLoader__.load({
       material: '③ 素材挖掘：从这屏素材里提炼选题',
       keyword: '② 关键词选题：围绕这个关键词找角度',
       radar: '① 热点雷达：从近期热点里找值得写的选题',
+    }
+
+    /* ---------- 排版：6 套风格方案 + Markdown → 行内样式 HTML 渲染 ---------- */
+    /* 方案取自开源项目 luobo-gzh-design（公众号 Markdown 排版系统）的六套预设，
+       渲染时只输出行内样式，粘进公众号编辑器不丢样式。 */
+    const LAYOUT_SCHEMES = [
+      { id: 'jade-business', name: '玉石商务', desc: '克制清晰，方法论 / 复盘', paper: '#FFFFFF', ink: '#17211C', accent: '#059669', soft: '#CBE6D8', font: 'modern', size: 15, lh: 1.9, ps: 16, hw: 800, px: 16, emphasis: 'gradient', quote: 'accent-line', card: 'accent-top', radius: 8 },
+      { id: 'ocean-editorial', name: '海盐杂志', desc: '留白舒展，观点 / 品牌', paper: '#FCFCFA', ink: '#1F2937', accent: '#2563EB', soft: '#C9D9EA', font: 'serif', size: 15, lh: 2, ps: 22, hw: 700, px: 20, emphasis: 'underline', quote: 'editorial', card: 'outline', radius: 4 },
+      { id: 'amber-report', name: '暖橙报告', desc: '温暖醒目，案例 / 数据', paper: '#FFFCF8', ink: '#38251A', accent: '#EA580C', soft: '#F1D2B5', font: 'system', size: 15, lh: 1.9, ps: 18, hw: 800, px: 18, emphasis: 'soft-fill', quote: 'soft-card', card: 'soft-fill', radius: 12 },
+      { id: 'violet-tech', name: '紫电科技', desc: '锐利理性，产品 / 教程', paper: '#F8F7FC', ink: '#191529', accent: '#7C3AED', soft: '#DDD6FE', font: 'modern', size: 14, lh: 1.8, ps: 16, hw: 800, px: 16, emphasis: 'gradient', quote: 'accent-line', card: 'accent-top', radius: 6 },
+      { id: 'cherry-friendly', name: '樱桃轻盈', desc: '亲切活泼，清单 / 生活', paper: '#FFF9FA', ink: '#42232C', accent: '#E11D48', soft: '#FECDD3', font: 'system', size: 15, lh: 2, ps: 18, hw: 700, px: 18, emphasis: 'soft-fill', quote: 'soft-card', card: 'soft-fill', radius: 12 },
+      { id: 'jade-classic', name: '墨玉宋韵', desc: '端正雅致，人文 / 长文', paper: '#FBFAF6', ink: '#27251F', accent: '#047857', soft: '#D8E6DD', font: 'serif', size: 15, lh: 2.1, ps: 22, hw: 700, px: 20, emphasis: 'underline', quote: 'editorial', card: 'accent-top', radius: 4 },
+    ]
+
+    const LAYOUT_FONTS = {
+      modern: '-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif',
+      serif: '"Songti SC",STSong,"Noto Serif SC",serif',
+      system: 'system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif',
+    }
+
+    const LAYOUT_EMPHASIS = [
+      { value: 'auto', label: '跟随方案' },
+      { value: 'gradient', label: '渐变荧光' },
+      { value: 'underline', label: '下划线' },
+      { value: 'soft-fill', label: '浅底色' },
+    ]
+
+    function layoutSchemeById(id) {
+      for (const scheme of LAYOUT_SCHEMES) {
+        if (scheme.id === id) return scheme
+      }
+      return LAYOUT_SCHEMES[0]
+    }
+
+    function hexToRgba(hex, alpha) {
+      const raw = String(hex || '').replace('#', '')
+      if (raw.length !== 6) return 'rgba(0,0,0,' + alpha + ')'
+      const r = parseInt(raw.slice(0, 2), 16)
+      const g = parseInt(raw.slice(2, 4), 16)
+      const b = parseInt(raw.slice(4, 6), 16)
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')'
+    }
+
+    function escHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    /* 行内语法：加粗 / 斜体 / 行内代码 / 链接 / 图片 / 允许的局部变色 span */
+    function renderInline(text, scheme, emphasis) {
+      const slots = []
+      const keep = (html) => {
+        slots.push(html)
+        return '\u0000' + (slots.length - 1) + '\u0000'
+      }
+      let out = String(text)
+      out = out.replace(/<span style="color:(#[0-9a-fA-F]{3,8})">([\s\S]*?)<\/span>/g, (m, color, inner) =>
+        keep('<span style="color:' + color + '">' + escHtml(inner) + '</span>'),
+      )
+      out = escHtml(out)
+      out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, src) =>
+        keep('<img src="' + src + '" alt="' + alt + '" style="max-width:100%;width:100%;border-radius:' + scheme.radius + 'px;display:block;">'),
+      )
+      out = out.replace(/`([^`]+)`/g, (m, code) =>
+        keep('<code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.88em;padding:1px 5px;border-radius:4px;background:' + hexToRgba(scheme.accent, 0.1) + ';color:' + scheme.accent + ';">' + code + '</code>'),
+      )
+      out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, label, href) =>
+        keep('<a href="' + href + '" style="color:' + scheme.accent + ';text-decoration:none;border-bottom:1px solid ' + hexToRgba(scheme.accent, 0.4) + ';">' + label + '</a>'),
+      )
+      const strong = (m, inner) => {
+        const body = '<strong style="font-weight:700;color:' + scheme.ink + ';">' + inner + '</strong>'
+        if (emphasis === 'gradient') {
+          return keep('<span style="background:linear-gradient(transparent 58%,' + hexToRgba(scheme.soft, 0.95) + ' 0);">' + body + '</span>')
+        }
+        if (emphasis === 'underline') {
+          return keep('<span style="border-bottom:2px solid ' + hexToRgba(scheme.accent, 0.45) + ';padding-bottom:1px;">' + body + '</span>')
+        }
+        if (emphasis === 'soft-fill') {
+          return keep('<span style="background:' + hexToRgba(scheme.soft, 0.55) + ';padding:1px 4px;border-radius:4px;">' + body + '</span>')
+        }
+        return keep('<span style="color:' + scheme.accent + ';font-weight:700;">' + inner + '</span>')
+      }
+      out = out.replace(/\*\*([^*]+)\*\*/g, strong)
+      out = out.replace(/\*([^*]+)\*/g, (m, inner) => '<em style="font-style:italic;">' + inner + '</em>')
+      out = out.replace(/\u0000(\d+)\u0000/g, (m, index) => slots[Number(index)] || '')
+      return out
+    }
+
+    /* Markdown（本文档方言）→ 公众号能吃的行内样式 HTML */
+    function renderWechatMd(markdown, options) {
+      const scheme = layoutSchemeById(options && options.schemeId)
+      const emphasisMode = options && options.emphasis && options.emphasis !== 'auto' ? options.emphasis : scheme.emphasis
+      const size = Number(options && options.size) || scheme.size
+      const lh = Number(options && options.lineHeight) || scheme.lh
+      const px = scheme.px
+      const soft = scheme.soft
+      const ink = scheme.ink
+      const accent = scheme.accent
+      const font = LAYOUT_FONTS[scheme.font] || LAYOUT_FONTS.modern
+      const inline = (text) => renderInline(text, scheme, emphasisMode)
+      const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n')
+      const out = []
+      const card = (kind, title, bodyHtml, extraStyle) => {
+        const head = title
+          ? '<p style="margin:0 0 8px;font-size:' + (size - 1) + 'px;font-weight:700;letter-spacing:0.04em;color:' + accent + ';">' + escHtml(title) + '</p>'
+          : ''
+        const base = kind === 'summary'
+          ? 'padding:14px 16px;border-radius:' + scheme.radius + 'px;border:1px solid ' + hexToRgba(soft, 0.9) + ';border-top:3px solid ' + accent + ';background:' + hexToRgba(soft, 0.18) + ';'
+          : kind === 'info'
+            ? 'padding:13px 15px;border-radius:' + scheme.radius + 'px;border:1px solid ' + hexToRgba(soft, 0.9) + ';background:' + hexToRgba(soft, 0.14) + ';'
+            : 'padding:12px 14px;border-radius:' + scheme.radius + 'px;border:1px dashed ' + hexToRgba(accent, 0.35) + ';background:' + hexToRgba(paper_soft(), 0.06) + ';'
+        return '<section style="margin:0 0 ' + scheme.ps + 'px;' + base + (extraStyle || '') + '">' + head + bodyHtml + '</section>'
+      }
+      const paper_soft = () => soft
+      const paragraph = (text) => '<p style="margin:0 0 ' + scheme.ps + 'px;font-size:' + size + 'px;line-height:' + lh + ';color:' + ink + ';letter-spacing:0.02em;">' + inline(text) + '</p>'
+
+      const flush = (buffer) => {
+        if (buffer.length === 0) return
+        out.push(paragraph(buffer.join('<br>')))
+        buffer.length = 0
+      }
+      let buffer = []
+      let index = 0
+      while (index < lines.length) {
+        const line = lines[index]
+        const trimmed = line.trim()
+
+        if (trimmed === '') { flush(buffer); index += 1; continue }
+
+        if (trimmed.startsWith('```')) {
+          flush(buffer)
+          const lang = trimmed.slice(3).trim()
+          const code = []
+          index += 1
+          while (index < lines.length && !lines[index].trim().startsWith('```')) { code.push(lines[index]); index += 1 }
+          index += 1
+          out.push('<pre style="margin:0 0 ' + scheme.ps + 'px;padding:12px 14px;border-radius:' + scheme.radius + 'px;background:' + hexToRgba(soft, 0.35) + ';overflow-x:auto;"><code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;color:' + ink + ';white-space:pre;">' + escHtml(code.join('\n')) + '</code></pre>')
+          continue
+        }
+
+        const cardStart = /^<(InfoCard|SummaryCard|ScrollCard|LongImageCard)([^>]*)>/.exec(trimmed)
+        if (cardStart) {
+          flush(buffer)
+          const kind = cardStart[1]
+          const attrText = cardStart[2] || ''
+          const attr = (name) => {
+            const m = new RegExp(name + '="([^"]*)"').exec(attrText)
+            return m ? m[1] : ''
+          }
+          const title = attr('title')
+          const body = []
+          index += 1
+          const closing = '</' + kind + '>'
+          while (index < lines.length && lines[index].trim() !== closing) { body.push(lines[index]); index += 1 }
+          index += 1
+          const bodyText = body.join('\n')
+          if (kind === 'SummaryCard') {
+            const items = bodyText.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('- '))
+            const listHtml = items.length
+              ? '<ul style="margin:0;padding-left:18px;">' + items.map((item) => '<li style="margin:0 0 6px;font-size:' + (size - 1) + 'px;line-height:' + lh + ';color:' + ink + ';">' + inline(item.slice(2)) + '</li>').join('') + '</ul>'
+              : paragraph(bodyText.trim())
+            out.push(card('summary', title, listHtml))
+          } else if (kind === 'InfoCard') {
+            out.push(card('info', title, '<p style="margin:0;font-size:' + (size - 1) + 'px;line-height:' + lh + ';color:' + ink + ';">' + bodyText.split('\n').map((l) => inline(l.trim())).join('<br>') + '</p>'))
+          } else if (kind === 'ScrollCard') {
+            const height = Math.min(360, Math.max(140, Number(attr('height')) || 220))
+            const hint = attr('hint') || '滑动查看'
+            const inner = renderWechatMd(bodyText, options)
+              .replace(/^<section[^>]*>/, '')
+              .replace(/<\/section>$/, '')
+            out.push(card('scroll', title, '<section style="max-height:' + height + 'px;overflow-y:auto;">' + inner + '</section><p style="margin:8px 0 0;font-size:10.5px;color:' + hexToRgba(ink, 0.5) + ';text-align:right;">' + escHtml(hint) + '</p>'))
+          } else {
+            const height = Math.min(720, Math.max(240, Number(attr('height')) || 360))
+            const hint = attr('hint') || '上下滑动查看'
+            const images = [...bodyText.matchAll(/!\[([^\]]*)\]\(([^)\s]+)\)/g)]
+            const imgs = images.map((m) => '<img src="' + m[2] + '" alt="' + escHtml(m[1]) + '" style="max-width:100%;width:100%;display:block;border-radius:' + scheme.radius + 'px;">').join('')
+            out.push(card('scroll', title, '<section style="max-height:' + height + 'px;overflow-y:auto;">' + imgs + '</section><p style="margin:8px 0 0;font-size:10.5px;color:' + hexToRgba(ink, 0.5) + ';text-align:right;">' + escHtml(hint) + '</p>'))
+          }
+          continue
+        }
+
+        const heading = /^(#{1,4})\s+(.*)$/.exec(trimmed)
+        if (heading) {
+          flush(buffer)
+          const level = heading[1].length
+          const text = heading[2].trim()
+          if (level === 1) {
+            const parts = text.split('|').map((part) => part.trim())
+            const number = parts.length >= 2 ? parts[0] : ''
+            const main = parts.length >= 2 ? parts[1] : parts[0]
+            const sub = parts.length >= 3 ? parts[2].replace(/^\/\/\/\s*/, '') : ''
+            out.push(
+              '<section style="margin:8px 0 26px;">'
+              + (number ? '<p style="margin:0 0 8px;font-size:11px;letter-spacing:0.22em;color:' + accent + ';">' + inline(number) + '</p>' : '')
+              + '<h1 style="margin:0;font-size:26px;line-height:1.35;font-weight:' + scheme.hw + ';color:' + ink + ';letter-spacing:0.01em;">' + inline(main) + '</h1>'
+              + (sub ? '<p style="margin:10px 0 0;font-size:11.5px;letter-spacing:0.16em;color:' + hexToRgba(ink, 0.5) + ';">' + inline(sub) + '</p>' : '')
+              + '</section>',
+            )
+          } else if (level === 2) {
+            const parts = text.split('|').map((part) => part.trim())
+            const label = parts.length >= 2 ? parts[0] : ''
+            const main = parts.length >= 2 ? parts[1] : parts[0]
+            out.push(
+              '<section style="margin:34px 0 14px;padding-left:11px;border-left:4px solid ' + accent + ';">'
+              + (label ? '<p style="margin:0 0 5px;font-size:10.5px;letter-spacing:0.2em;color:' + accent + ';">' + inline(label) + '</p>' : '')
+              + '<h2 style="margin:0;font-size:19px;line-height:1.5;font-weight:' + scheme.hw + ';color:' + ink + ';">' + inline(main) + '</h2>'
+              + '</section>',
+            )
+          } else if (level === 3) {
+            const parts = text.split('|').map((part) => part.trim())
+            const label = parts.length >= 2 ? parts[0] : ''
+            const main = parts.length >= 2 ? parts[1] : parts[0]
+            out.push(
+              '<h3 style="margin:24px 0 10px;font-size:16.5px;line-height:1.5;font-weight:700;color:' + accent + ';">'
+              + (label ? '<span style="font-size:11px;letter-spacing:0.14em;color:' + hexToRgba(ink, 0.45) + ';margin-right:8px;">' + inline(label) + '</span>' : '')
+              + inline(main) + '</h3>',
+            )
+          } else {
+            out.push('<h4 style="margin:20px 0 8px;font-size:15px;line-height:1.6;font-weight:700;color:' + ink + ';">' + '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + accent + ';margin-right:8px;vertical-align:middle;"></span>' + inline(text) + '</h4>')
+          }
+          index += 1
+          continue
+        }
+
+        if (/^-{3,}$/.test(trimmed)) {
+          flush(buffer)
+          out.push('<hr style="border:none;border-top:1px dashed ' + hexToRgba(soft, 0.95) + ';margin:28px 0;">')
+          index += 1
+          continue
+        }
+
+        if (trimmed.startsWith('>')) {
+          flush(buffer)
+          const quote = []
+          while (index < lines.length && lines[index].trim().startsWith('>')) {
+            quote.push(lines[index].trim().replace(/^>\s?/, ''))
+            index += 1
+          }
+          const bg = scheme.quote === 'soft-card' ? hexToRgba(soft, 0.3) : hexToRgba(soft, 0.18)
+          out.push('<section style="margin:0 0 ' + scheme.ps + 'px;padding:12px 14px;border-left:3px solid ' + accent + ';background:' + bg + ';border-radius:' + scheme.radius + 'px;"><p style="margin:0;font-size:' + (size - 0.5) + 'px;line-height:' + lh + ';color:' + hexToRgba(ink, 0.85) + ';">' + quote.map((q) => inline(q)).join('<br>') + '</p></section>')
+          continue
+        }
+
+        const bullet = /^[-*+]\s+(.*)$/.exec(trimmed)
+        if (bullet) {
+          flush(buffer)
+          const items = []
+          while (index < lines.length) {
+            const m = /^[-*+]\s+(.*)$/.exec(lines[index].trim())
+            if (!m) break
+            items.push(m[1])
+            index += 1
+          }
+          out.push('<ul style="margin:0 0 ' + scheme.ps + 'px;padding-left:20px;">' + items.map((item) => '<li style="margin:0 0 7px;font-size:' + size + 'px;line-height:' + lh + ';color:' + ink + ';">' + inline(item) + '</li>').join('') + '</ul>')
+          continue
+        }
+
+        const ordered = /^(\d+)\.\s+(.*)$/.exec(trimmed)
+        if (ordered) {
+          flush(buffer)
+          const items = []
+          while (index < lines.length) {
+            const m = /^(\d+)\.\s+(.*)$/.exec(lines[index].trim())
+            if (!m) break
+            items.push(m[2])
+            index += 1
+          }
+          out.push('<ol style="margin:0 0 ' + scheme.ps + 'px;padding-left:20px;">' + items.map((item) => '<li style="margin:0 0 7px;font-size:' + size + 'px;line-height:' + lh + ';color:' + ink + ';">' + inline(item) + '</li>').join('') + '</ol>')
+          continue
+        }
+
+        if (/^\|.*\|$/.test(trimmed)) {
+          flush(buffer)
+          const rows = []
+          while (index < lines.length && /^\|.*\|$/.test(lines[index].trim())) {
+            rows.push(lines[index].trim())
+            index += 1
+          }
+          const cells = rows.map((row) => row.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()))
+          const aligns = cells[1] || []
+          const body = cells.filter((_, i) => i !== 1)
+          const alignOf = (i) => {
+            const token = (aligns[i] || '---').trim()
+            if (token.startsWith(':') && token.endsWith(':')) return 'center'
+            if (token.endsWith(':')) return 'right'
+            return 'left'
+          }
+          const html = body.map((row, rowIndex) => {
+            const tag = rowIndex === 0 ? 'th' : 'td'
+            const bg = rowIndex === 0 ? 'background:' + hexToRgba(soft, 0.35) + ';font-weight:700;' : ''
+            return '<tr>' + row.map((cell, cellIndex) => '<' + tag + ' style="padding:8px 10px;border:1px solid ' + hexToRgba(ink, 0.14) + ';font-size:' + (size - 1) + 'px;line-height:1.6;color:' + ink + ';text-align:' + alignOf(cellIndex) + ';' + bg + '">' + inline(cell) + '</' + tag + '>').join('') + '</tr>'
+          }).join('')
+          out.push('<table style="width:100%;border-collapse:collapse;margin:0 0 ' + scheme.ps + 'px;">' + html + '</table>')
+          continue
+        }
+
+        const imageOnly = /^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/.exec(trimmed)
+        if (imageOnly) {
+          flush(buffer)
+          out.push('<section style="margin:0 0 ' + scheme.ps + 'px;"><img src="' + imageOnly[2] + '" alt="' + escHtml(imageOnly[1]) + '" style="max-width:100%;width:100%;display:block;border-radius:' + scheme.radius + 'px;"></section>')
+          index += 1
+          continue
+        }
+
+        buffer.push(trimmed)
+        index += 1
+      }
+      flush(buffer)
+      return '<section style="background:' + scheme.paper + ';color:' + ink + ';font-family:' + font + ';font-size:' + size + 'px;line-height:' + lh + ';padding:' + px + 'px;box-sizing:border-box;">'
+        + out.join('')
+        + '</section>'
     }
 
     const STAGES = [
@@ -575,8 +901,66 @@ window.__ModuleLoader__.load({
         },
       },
       {
-        id: 'title',
+        id: 'layout',
         num: '⑥',
+        short: '排版面',
+        name: '公众号排版（Markdown 方言 → 行内样式 HTML）',
+        blurb: '给标题分层、加卡片与强调，渲染成粘进公众号编辑器不丢样式的 HTML。',
+        fields: [
+          {
+            key: 'scheme',
+            label: '风格方案',
+            kind: 'select',
+            options: LAYOUT_SCHEMES.map((item) => ({ value: item.id, label: item.name + ' · ' + item.desc })),
+          },
+          {
+            key: 'emphasis',
+            label: '重点强调样式',
+            kind: 'select',
+            options: LAYOUT_EMPHASIS,
+          },
+          {
+            key: 'size',
+            label: '正文字号',
+            kind: 'select',
+            options: [
+              { value: '14', label: '14px · 紧凑' },
+              { value: '15', label: '15px · 标准' },
+              { value: '16', label: '16px · 舒展' },
+            ],
+          },
+          {
+            key: 'lineHeight',
+            label: '行距',
+            kind: 'select',
+            options: [
+              { value: '1.8', label: '1.8 · 紧凑' },
+              { value: '1.9', label: '1.9' },
+              { value: '2', label: '2.0 · 舒展' },
+              { value: '2.1', label: '2.1 · 很松' },
+            ],
+          },
+          {
+            key: 'source',
+            label: '待排版正文（Markdown；留空则用上文定稿）',
+            kind: 'textarea',
+            rows: 8,
+            placeholder: '把定稿粘这里；排版稿回来后也粘这里，下方实时渲染并可直接复制 HTML。',
+          },
+        ],
+        compose(v, tpl) {
+          const scheme = layoutSchemeById(v.scheme)
+          const emphasis = (v.emphasis && v.emphasis !== 'auto' ? v.emphasis : scheme.emphasis)
+          const emphasisLabel = { gradient: '渐变荧光', underline: '下划线', 'soft-fill': '浅底色' }[emphasis] || emphasis
+          return (
+            tpl +
+            '\n\n---\n\n**本次排版设定**：风格方案「' + scheme.name + '」（纸色 ' + scheme.paper + ' / 墨色 ' + scheme.ink + ' / 强调 ' + scheme.accent + '），强调样式 ' + emphasisLabel + '，正文 ' + (v.size || scheme.size) + 'px，行距 ' + (v.lineHeight || scheme.lh) + '。\n\n**待排版的正文**：\n\n' + (v.source || '（用上文定稿，不要另写内容）')
+          )
+        },
+      },
+      {
+        id: 'title',
+        num: '⑦',
         short: '起标题',
         name: '标题与封面摘要',
         blurb: '出 12 组标题 + 封面摘要，按公众号传播规律筛出最优几组。',
@@ -607,7 +991,7 @@ window.__ModuleLoader__.load({
       },
       {
         id: 'cover',
-        num: '⑦',
+        num: '⑧',
         short: '做封面',
         name: '封面生成（豆包 seedream 以文生图）',
         blurb: '按你选的视觉风格，把内容编译成封面提示词，直接调火山方舟出图并存进本次的稿件目录。',
@@ -891,6 +1275,12 @@ window.__ModuleLoader__.load({
  background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent)}
 
 .lou-wb-select-field{width:100%;height:32px;padding:0 8px;font-size:12.5px}
+.lou-wb-layout .lou-wb-panel-head{margin-bottom:12px}
+.lou-wb-layout-preview{margin-top:2px;padding:16px 14px;border-radius:12px;
+ border:1px solid var(--lou-line2);background:var(--lou-soft);
+ max-height:560px;overflow:auto;scrollbar-gutter:stable}
+.lou-wb-layout-preview > section{max-width:520px;margin:0 auto;border-radius:10px;
+ box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .lou-wb-cover{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding:12px 13px;
  border-radius:12px;border:1px dashed color-mix(in srgb,var(--lou-brand) 38%,var(--lou-line2));
  background:color-mix(in srgb,var(--lou-brand) 4%,transparent)}
@@ -1437,6 +1827,26 @@ window.__ModuleLoader__.load({
         dirty.current = false
         setPreview(compose(stage, values, template))
         setStatus({ kind: 'idle', text: '' })
+      }
+
+      async function copyTextTo(text, what) {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text)
+          } else {
+            const area = document.createElement('textarea')
+            area.value = text
+            area.style.position = 'fixed'
+            area.style.opacity = '0'
+            document.body.appendChild(area)
+            area.select()
+            document.execCommand('copy')
+            document.body.removeChild(area)
+          }
+          setStatus({ kind: 'ok', text: t('layout.copied', { what }) })
+        } catch (error) {
+          setStatus({ kind: 'error', text: t('status.copyFailed') })
+        }
       }
 
       async function copy() {
@@ -2162,6 +2572,60 @@ window.__ModuleLoader__.load({
         )
         : null
 
+      const layoutHtml = stage.id !== 'layout'
+        ? ''
+        : renderWechatMd(values.source || '', {
+          schemeId: values.scheme,
+          emphasis: values.emphasis,
+          size: values.size,
+          lineHeight: values.lineHeight,
+        })
+
+      const layoutPanel = stage.id !== 'layout'
+        ? null
+        : h(
+          'section',
+          { className: 'lou-wb-panel lou-wb-layout', key: 'layout-panel' },
+          h(
+            'div',
+            { className: 'lou-wb-panel-head' },
+            h(
+              'div',
+              null,
+              h('h3', { className: 'lou-wb-panel-title' }, t('layout.title')),
+              h('p', { className: 'lou-wb-panel-sub' }, t('layout.sub')),
+            ),
+            h(
+              'div',
+              { className: 'lou-wb-panel-actions' },
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'lou-wb-btn is-quiet',
+                  onClick: () => copyTextTo(String(values.source || ''), t('layout.copyMd')),
+                },
+                t('layout.copyMd'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'lou-wb-btn is-accent',
+                  onClick: () => copyTextTo(layoutHtml, t('layout.copyHtml')),
+                },
+                t('layout.copyHtml'),
+              ),
+            ),
+          ),
+          String(values.source || '').trim() === ''
+            ? h('p', { className: 'lou-wb-hint' }, t('layout.empty'))
+            : h('div', {
+              className: 'lou-wb-layout-preview',
+              dangerouslySetInnerHTML: { __html: layoutHtml },
+            }),
+        )
+
       const coverPanel = stage.id !== 'cover'
         ? null
         : h(
@@ -2421,7 +2885,7 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'lou-wb-cols' },
               rail,
-              h('main', { className: 'lou-wb-main' }, fieldsPanel, previewPanel),
+              h('main', { className: 'lou-wb-main' }, fieldsPanel, layoutPanel, previewPanel),
             ),
           ),
         ),
@@ -2453,7 +2917,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 24, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 25, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )

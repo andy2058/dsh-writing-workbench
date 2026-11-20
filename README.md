@@ -2,7 +2,7 @@
 
 把「老欧拾光记」公众号写作的六阶段提示词流水线装进 DeepSeek Harness 网页端，做成**左侧栏里的可视化操作页**：
 
-**⓪ 找选题 → 🎯 跑全程 → ① 定角度 → ② 搭结构 → ③ 磨文字 → ④ 促转发 → ⑤ 过自检 → ⑥ 起标题 → ⑦ 做封面**
+**⓪ 找选题 → 🎯 跑全程 → ① 定角度 → ② 搭结构 → ③ 磨文字 → ④ 促转发 → ⑤ 过自检 → ⑥ 排版面 → ⑦ 起标题 → ⑧ 做封面**
 
 九个环节名全部三字，侧栏轨道上一排对齐，竖着看就是一条流水线；每格下面的小字才是这一环的具体做法。
 
@@ -95,6 +95,27 @@
 
 顺序是 **找选题 → 定角度 → 搭结构 → 磨文字 → 促转发 → 过自检 → 起标题 → 做封面**：自检先跑，标题和封面摘要基于自检后的定稿来写，最后一步出封面。
 
+## ⑥ 排版面（Markdown 方言 → 行内样式 HTML）
+
+排版参考开源项目 [luobo-gzh-design](https://github.com/zhouwei713/luobo-gzh-design)（公众号 Markdown 排版系统），
+把它的排版方言与六套风格方案搬进工作台，但**不依赖任何外部服务**：
+
+1. 模型只负责**加排版结构**（标题三段式、加粗、引用、卡片、分割线），不改写正文；
+2. 工作台把这份 Markdown **渲染成行内样式 HTML**（不写 `class` / `<style>`，不用 flex / 外部字体）；
+3. 「复制 HTML」→ 粘进公众号编辑器即可，样式不掉；也可「复制 Markdown」留档。
+
+| 风格方案 | 气质 | 纸色 / 墨色 / 强调 |
+| --- | --- | --- |
+| 玉石商务 | 克制清晰，方法论 / 复盘 | `#FFFFFF` / `#17211C` / `#059669` |
+| 海盐杂志 | 留白舒展，观点 / 品牌 | `#FCFCFA` / `#1F2937` / `#2563EB` |
+| 暖橙报告 | 温暖醒目，案例 / 数据 | `#FFFCF8` / `#38251A` / `#EA580C` |
+| 紫电科技 | 锐利理性，产品 / 教程 | `#F8F7FC` / `#191529` / `#7C3AED` |
+| 樱桃轻盈 | 亲切活泼，清单 / 生活 | `#FFF9FA` / `#42232C` / `#E11D48` |
+| 墨玉宋韵 | 端正雅致，人文 / 长文 | `#FBFAF6` / `#27251F` / `#047857` |
+
+字段：风格方案、强调样式（跟随方案 / 渐变荧光 / 下划线 / 浅底色）、字号（14/15/16）、行距（1.8–2.1）、待排版正文。
+四个卡片组件：`InfoCard`、`SummaryCard`、`ScrollCard`（长日志/代码）、`LongImageCard`（长截图），渲染时都变成行内样式。
+
 ## ⓪ 找选题（从海量信息里筛题材）
 
 原「老欧自媒体选题专家」插件已融合进工作台，成为最前面的一格。它和 ① 的分工：
@@ -170,12 +191,13 @@
 
 技术要点：浏览器不直接访问方舟（避免 CORS），Key 走 `x-ark-key` 请求头；宿主路由 `/api/x-writing-workbench/cover` 注册在 `ctx.connection.fetch` 上，沿用 DSH 的登录态鉴权；落盘只允许写进 `~/DSH-Writing desk` 或 `稿件-*` 目录。
 
-## 9 个 agent skill
+## 10 个 agent skill
 
 | Skill | 阶段 | 触发场景 |
 |---|---|---|
 | `lao-ou-article-pipeline` | 🎯 跑全程（编排） | "帮我写一篇老欧风格的文章" |
 | `lao-ou-topic-expert` | ⓪ 选题专家 | "这个链接能写什么" / "选题：AI 编程" / "今天写什么" |
+| `lao-ou-wechat-layout` | ⑥ 排版面 | "把这篇排成公众号能直接粘的版" |
 | `lao-ou-topic-angles` | ① 定角度（原选题角度） | "帮我给这个话题找个角度" |
 | `lao-ou-writing-structure` | ② 搭结构（SUCCESs 版） | "按老欧的风格写一篇公众号文章" |
 | `lao-ou-article-polish` | ③ 磨文字（去 AI 味） | "帮我润色这篇稿子，去去 AI 味" |
@@ -184,7 +206,7 @@
 | `lao-ou-title-and-cover` | ⑥ 起标题（12 组） | "出 12 组标题和封面摘要" |
 | `lao-ou-cover-design` | ⑦ 做封面 | "按黑红剪影风格给这篇文章做张封面" |
 
-这 9 个 skill 由宿主端 `lib/index.js` 通过 `ctx.skills.register()` 注册（内存注册，不往工作区或 `$DSH_HOME` 写文件），随插件卸载自动消失。
+这 10 个 skill 由宿主端 `lib/index.js` 通过 `ctx.skills.register()` 注册（内存注册，不往工作区或 `$DSH_HOME` 写文件），随插件卸载自动消失。
 
 ---
 
@@ -318,7 +340,7 @@ lao-ou-writing-workbench/
 | `sidebar.panellist` | 左侧栏图标；同一 `id` 就是它要打开的 `main` 键 |
 | `main`（`key: writing-workbench`） | 中央整页工作台；会话列表来自 `useSessions`，用 `retainedBy.mainView > 0` 找出"你正在看的会话" |
 | `conversation.input.right` | 输入框右侧快捷入口，点击 = `layout.selectPanel('writing-workbench')` |
-| `lib/index.js` | 宿主端：`ctx.skills.register()` 注册 9 个 skill |
+| `lib/index.js` | 宿主端：`ctx.skills.register()` 注册 10 个 skill |
 | `ctx.locale` | 界面文案注册到 `dsh-writing-workbench` 命名空间（zh + en，41 条 × 2） |
 
 样式随组件挂载为 `<style>` 元素，卸载即移除；颜色只用已注册的 `--dsw-alias-*` 主题变量（bg-base / bg-layer-1 / bg-layer-2 / border-l1 / border-l2 / brand-primary / label-primary / label-secondary / label-on-color / state-success-primary / state-error-primary / state-warn-primary / state-idle-primary），其余层次用 `color-mix()` 和局部 `--lou-*` 变量推导，自动跟随浅色/深色主题；字体用宋体（Songti SC / STSong / Noto Serif SC）表达写作气质。
@@ -333,6 +355,9 @@ plugin_manager remove_bundle target=@lao-ou/dsh-writing-workbench
 
 | 版本 | 主要变化 |
 |---|---|
+| 0.14.0 | 新增 ⑥ 排版面：参考 luobo-gzh-design 的 Markdown 方言 + 六套风格方案，工作台本地渲染成行内样式 HTML，一键复制进公众号编辑器 |
+| 0.13.5 | ② 搭结构也收成强制 1500–1700 字 |
+| 0.13.4 | ③ 磨文字强制 1500–1700 字 |
 | 0.13.2 | 九个环节名统一为三字：找选题 / 定角度 / 搭结构 / 磨文字 / 促转发 / 过自检 / 起标题 / 做封面 / 跑全程 |
 | 0.13.1 | 区分两个选题环节：⓪ 找选题（海量信息筛题材）与 ① 定角度（给已选题材找切口） |
 | 0.13.0 | 融合「老欧自媒体选题专家」：新增 ⓪ 选题专家环节与 `lao-ou-topic-expert` skill，独立插件可卸载 |
