@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.13.3'
+    const VERSION = 'v0.13.4'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -516,7 +516,7 @@ window.__ModuleLoader__.load({
         num: '③',
         short: '磨文字',
         name: '文章润色',
-        blurb: '去 AI 味、书面腔和翻译腔，改成老欧的口语节奏。',
+        blurb: '去 AI 味、书面腔和翻译腔，改成老欧的口语节奏；润色后强制压到 1500-1700 字。',
         fields: [
           {
             key: 'text',
@@ -2453,7 +2453,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 22, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 23, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )
