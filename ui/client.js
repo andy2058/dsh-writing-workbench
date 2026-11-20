@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     const LS = 'dsh.writing-workbench.'
     const PANEL_ID = 'writing-workbench'
     /* 与 package.json 的 version 保持一致，界面上显示，方便确认浏览器跑的是哪一版 */
-    const VERSION = 'v0.13.4'
+    const VERSION = 'v0.13.5'
     /* 写作工作区：'新建流程' 的目标值，不是真实的会话 id */
     const WORKFLOW_TARGET = 'new'
     const WORKSPACE_NAME = 'DSH-Writing desk'
@@ -482,7 +482,7 @@ window.__ModuleLoader__.load({
         num: '②',
         short: '搭结构',
         name: '写作结构（SUCCESs 版）',
-        blurb: '把主题与素材写成一篇符合老欧风格的公众号长文（3000 字量级）。',
+        blurb: '把主题与素材写成符合老欧风格的公众号长文；成稿强制 1500-1700 字。',
         fields: [
           {
             key: 'topic',
@@ -2453,7 +2453,7 @@ window.__ModuleLoader__.load({
         registerSlot(
           ctx,
           SLOT_SIDEBAR,
-          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 23, label: () => t('panel.label') },
+          { name: SLOT_SIDEBAR, id: PANEL_ID, order: 24, label: () => t('panel.label') },
           WorkbenchIcon,
           'writing-workbench:sidebar-entry',
         )

@@ -72,7 +72,7 @@ mod.apply(ctx);
 /* 1. 三个注册点：左侧栏图标 + 中央页面 + 输入框入口 */
 const byOwner = new Map(registrations.map((r) => [r.owner, r.result.registered]));
 const expected = [
-  ['sidebar.panellist', 'writing-workbench', 23],
+  ['sidebar.panellist', 'writing-workbench', 24],
   ['main', 'writing-workbench', undefined],
   ['conversation.input.right', 'lou-writing-workbench', 20],
 ];
