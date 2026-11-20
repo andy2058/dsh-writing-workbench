@@ -54,6 +54,18 @@
       },
       "versions": [
         {
+          "version": "0.13.4",
+          "publishTimestamp": 1795156491,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/andy2058/dsh-writing-workbench.git",
+            "commit": "ada7ddc7103492eb58d27426968a4b7f9c2a9ad9"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.3 <0.3.0"
+          }
+        },
+        {
           "version": "0.13.3",
           "publishTimestamp": 1795077467,
           "source": {
